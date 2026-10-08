@@ -7,6 +7,8 @@ Lexa is a SwiftUI menu bar app for macOS 26 (or a newer version). It uses Swift 
 - Test: `make test`. The tests use Swift Testing (target `LexaTests`) and operate in Lexa.app.
 - Start: `make run`. Debug builds accept `--demo ["text"]`. This option opens the popup window immediately.
 - App icon: `make icon` makes the icon again.
+- Release: `make dist` builds a universal (arm64 and x86_64) Release version and makes `build/dist/Lexa-<version>.zip` and a SHA-256 file. The version comes from `MARKETING_VERSION` in the pbxproj. Publish with `gh release create v<version> build/dist/Lexa-<version>.zip`.
+- Code coverage: the shared scheme has `codeCoverageEnabled = "NO"` and no automatic test plan. If coverage is on, Release builds include profile code and write `default.profraw` files.
 - Signing: `make signing` makes a self-signed "Lexa Local Signing" identity. If this identity is available, `make build` signs the app with it. Thus, the Accessibility (TCC) access stays after each build. An ad-hoc build loses the access after each build. To repair this problem, type `tccutil reset Accessibility com.sasuke40.lexa`.
 
 ## Project layout

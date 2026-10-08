@@ -18,6 +18,19 @@
 
 Select text in an app. Then press **⌥⌘G**. Lexa shows a corrected version of the text and highlights the changes. Press **↩** to replace the selected text.
 
+## Installation
+
+You must have macOS 26 (or a newer version).
+
+1. Download `Lexa-x.y.z.zip` from the [latest release](https://github.com/SASUKE40/Lexa/releases/latest).
+2. Open the zip file.
+3. Move `Lexa.app` to the Applications folder.
+4. Open Lexa.
+5. If macOS does not open Lexa, go to **System Settings → Privacy & Security**. Then click **Open Anyway**.
+6. Give Accessibility access when Lexa tells you to.
+
+Apple did not notarize Lexa. Thus, macOS shows a warning when you open Lexa for the first time.
+
 ## Functions
 
 - **Correct**: Lexa corrects the grammar, spelling, and punctuation. It makes only the necessary changes.
@@ -88,6 +101,7 @@ make signing # Do one time: make a local signing certificate (Lexa keeps Accessi
 make run     # Build the Release version and start it
 make test    # Do the unit tests
 make build   # Build only (CONFIG=Debug for a Debug build)
+make dist    # Build a universal Release version and make build/dist/Lexa-x.y.z.zip
 ```
 
 You can also open `Lexa.xcodeproj` in Xcode and press ⌘R.
