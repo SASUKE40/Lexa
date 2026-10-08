@@ -13,6 +13,7 @@ struct SuggestionView: View {
         .padding(16)
         .frame(width: SuggestionPanelController.width, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)
+        .background(WindowDragArea())
         .glassEffect(.regular, in: .rect(cornerRadius: SuggestionPanelController.cornerRadius, style: .continuous))
     }
 
@@ -20,15 +21,19 @@ struct SuggestionView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            Image(systemName: "text.badge.checkmark")
-                .foregroundStyle(.tint)
-            Text("Lexa").font(.headline)
-            Spacer()
-            Text(state.providerSummary)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
+            Group {
+                Image(systemName: "text.badge.checkmark")
+                    .foregroundStyle(.tint)
+                Text("Lexa").font(.headline)
+                Spacer()
+                Text(state.providerSummary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            // Clicks go through to the drag area, so the full header moves the window.
+            .allowsHitTesting(false)
             Button {
                 state.closePanel()
             } label: {

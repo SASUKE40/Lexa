@@ -37,6 +37,21 @@ final class FloatingPanel: NSPanel {
     }
 }
 
+/// Background layer that moves the window when you drag an empty part of the popup.
+/// SwiftUI content does not pass drags to `isMovableByWindowBackground`, so this view starts the drag itself.
+struct WindowDragArea: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView { DragView() }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    private final class DragView: NSView {
+        override var mouseDownCanMoveWindow: Bool { true }
+
+        override func mouseDown(with event: NSEvent) {
+            window?.performDrag(with: event)
+        }
+    }
+}
+
 final class SuggestionPanelController {
     private let panel = FloatingPanel()
     static let width: CGFloat = 460
