@@ -4,12 +4,13 @@ import Testing
 
 struct CLIArgumentsTests {
     @Test func claudeRunsWithoutToolsOrSessions() {
-        let args = ClaudeCodeBackend.arguments(system: "RULES", model: "haiku")
+        let args = ClaudeCodeBackend.arguments(system: "RULES", model: "opus")
         #expect(args.first == "-p")
         #expect(pair(args, "--tools") == "")
         #expect(pair(args, "--system-prompt") == "RULES")
         #expect(pair(args, "--output-format") == "stream-json")
-        #expect(pair(args, "--model") == "haiku")
+        #expect(pair(args, "--model") == "opus")
+        #expect(pair(args, "--effort") == "low")
         #expect(args.contains("--no-session-persistence"))
         #expect(args.contains("--strict-mcp-config"))
         #expect(!args.contains("--bare"))
@@ -20,12 +21,12 @@ struct CLIArgumentsTests {
     }
 
     @Test func codexRunsReadOnlyAndReadsPromptFromStdin() {
-        let args = CodexBackend.arguments(model: "gpt-5.4-mini", workspace: "/tmp/w")
+        let args = CodexBackend.arguments(model: "gpt-6.1-sol", workspace: "/tmp/w")
         #expect(args.first == "exec")
         #expect(args.last == "-")
         #expect(pair(args, "--sandbox") == "read-only")
         #expect(pair(args, "-C") == "/tmp/w")
-        #expect(pair(args, "-m") == "gpt-5.4-mini")
+        #expect(pair(args, "-m") == "gpt-6.1-sol")
         #expect(args.contains("--json"))
         #expect(args.contains("--ephemeral"))
         #expect(args.contains("approval_policy=\"never\""))

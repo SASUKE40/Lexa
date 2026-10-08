@@ -65,7 +65,8 @@ struct ProviderTests {
 
         let prefs = Preferences(defaults: defaults)
         #expect(prefs.provider == .openRouter)
-        #expect(prefs.model(for: .claude) == "haiku")
+        #expect(prefs.model(for: .claude) == "opus")
+        #expect(prefs.model(for: .codex) == CodexModels.available().first)
         prefs.providerID = Provider.groq.id
         prefs.models[Provider.groq.id] = "llama-3.1-8b-instant"
         prefs.hotKey = HotKeyCombo(keyCode: 5, modifiers: 256, key: "G")
@@ -74,5 +75,31 @@ struct ProviderTests {
         #expect(reloaded.provider == .groq)
         #expect(reloaded.model(for: .groq) == "llama-3.1-8b-instant")
         #expect(reloaded.hotKey.display == "⌘G")
+    }
+}
+
+struct CodexModelsTests {
+    @Test func sortsVisibleModelsByPriority() {
+        let json = #"{"models":[{"slug":"gpt-6-astra","visibility":"list","priority":2},{"slug":"gpt-reserve","visibility":"hide","priority":1},{"slug":"gpt-6.1-sol","visibility":"list","priority":0}]}"#
+        #expect(CodexModels.parse(Data(json.utf8)) == ["gpt-6.1-sol", "gpt-6-astra"])
+    }
+
+    @Test func fallsBackWhenTheCacheIsMissingOrBroken() {
+        #expect(CodexModels.available(cache: URL(fileURLWithPath: "/nonexistent/models_cache.json")) == CodexModels.fallback)
+        #expect(CodexModels.parse(Data("not json".utf8)).isEmpty)
+    }
+
+    @Test func oldSavedChoicesAreClearedOnce() throws {
+        let suite = "lexa.tests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(["claude": "haiku", "codex": "", "groq": "llama-3.1-8b-instant"], forKey: "models")
+
+        let prefs = Preferences(defaults: defaults)
+        #expect(prefs.model(for: .claude) == "opus")
+        #expect(prefs.models["groq"] == "llama-3.1-8b-instant")
+
+        prefs.models[Provider.claude.id] = "haiku"
+        #expect(Preferences(defaults: defaults).model(for: .claude) == "haiku")
     }
 }

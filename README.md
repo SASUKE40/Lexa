@@ -76,19 +76,27 @@ To change the shortcut, the default action, or the language for Translate, open 
 
 | Provider | Type | Access |
 |---|---|---|
-| OpenRouter | Free models (`openrouter/free` or a `:free` model) | https://openrouter.ai/keys |
-| Nous Portal | Hermes models | https://portal.nousresearch.com |
+| OpenRouter | Free models (`openrouter/free` or a `:free` model) | **Sign in with OpenRouter**, or an API key from https://openrouter.ai/keys |
+| Nous Portal | Your Nous Portal subscription, or Hermes models | **Sign in with Nous Portal**, or an API key from https://portal.nousresearch.com |
 | Groq | Free to use, with a rate limit | https://console.groq.com/keys |
 | Cerebras | Free to use, with a rate limit | https://cloud.cerebras.ai |
 | Google Gemini | Free to use, with a rate limit | https://aistudio.google.com/apikey |
 | Mistral | Free "Experiment" plan | https://console.mistral.ai/api-keys |
-| GitHub Models | Free with a GitHub token (`models: read`) | https://github.com/settings/personal-access-tokens |
+| GitHub Models | Free with a GitHub account | **Sign in with GitHub**, the GitHub CLI login (`gh`), or a token (`models: read`) |
 | Ollama / LM Studio | Local. An internet connection and a key are not necessary. | https://ollama.com · https://lmstudio.ai |
 | Custom | A server with an OpenAI-compatible `/chat/completions` endpoint | |
 | **ChatGPT (Codex CLI)** | Your ChatGPT plan | Install `codex`. Then type `codex login`. |
 | **Claude (Claude Code CLI)** | Your Claude Pro or Max plan | Install `claude`. Then type `claude auth login`. |
 
-Lexa keeps API keys in the macOS Keychain. You can change the model name. **Download the Model List** shows the models that your key can use. The list of free models changes frequently.
+Lexa keeps API keys and sign-in tokens in the macOS Keychain. You can change the model name. **Download the Model List** shows the models that your key can use. The list of free models changes frequently.
+
+### Sign-in
+
+- **OpenRouter**: Lexa uses the official OpenRouter OAuth PKCE procedure. Your browser opens, and you give access. Then OpenRouter makes a new API key for Lexa. You can delete this key at https://openrouter.ai/keys.
+- **Nous Portal**: Lexa shows a code and opens the Nous Portal page. Make sure that the page shows the code. Then give access. Lexa refreshes the token automatically.
+- **GitHub**: Lexa shows a code and opens the GitHub page. Paste the code, and give access. Or use the token of the GitHub CLI (`gh auth token`).
+
+Nous Research does not have a public sign-in for other apps. Thus, the Nous Portal sign-in uses the public client ID of Hermes Agent. Nous Research did not give Lexa permission for this sign-in, and it can stop at any time. If it stops, use an API key.
 
 ### Subscription providers
 
@@ -98,6 +106,13 @@ Lexa sends the text to the CLI through stdin. The CLI operates in an empty tempo
 
 - For Claude, Lexa uses `--tools ""`.
 - For Codex, Lexa uses a read-only sandbox.
+
+Lexa uses the newest model of each subscription:
+
+- For ChatGPT, Lexa reads the model list of the Codex CLI (`~/.codex/models_cache.json`) and uses the first model in it. This file has no credentials.
+- For Claude, Lexa uses the `opus` alias. This alias always points to the newest Claude Opus model.
+
+You can select a different model in Settings. Lexa uses low reasoning effort to make the result faster.
 
 These providers are slower than API providers. Each result can take some seconds more.
 

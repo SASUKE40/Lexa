@@ -211,8 +211,12 @@ final class AppState {
         let model = preferences.model(for: provider)
         switch provider.kind {
         case .openAICompatible:
-            return OpenAICompatibleBackend(provider: provider, baseURL: preferences.baseURL(for: provider),
-                                           apiKey: apiKey(for: provider), model: model)
+            var backend = OpenAICompatibleBackend(provider: provider, baseURL: preferences.baseURL(for: provider),
+                                                  apiKey: apiKey(for: provider), model: model)
+            if provider.signIn.contains(.nousPortal), NousOAuth.isSignedIn {
+                backend.tokenProvider = { try await NousSession.shared.accessToken() }
+            }
+            return backend
         case .claudeCLI:
             return ClaudeCodeBackend(model: model, pathOverride: preferences.cliPath(for: provider))
         case .codexCLI:

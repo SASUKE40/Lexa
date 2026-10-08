@@ -21,6 +21,9 @@ Lexa is a SwiftUI menu bar app for macOS 26 (or a newer version). It uses Swift 
 
 ## Conventions
 - Do not read subscription tokens (`~/.codex/auth.json`, Claude keychain items). Subscription providers only use the official CLIs.
+- Sign-in (`Lexa/Providers/OAuth`): OpenRouter uses the official PKCE procedure with a loopback callback (`LoopbackServer`) and stores the new API key. Nous Portal and GitHub use the device authorization grant (`DeviceFlow`, RFC 8628). `NousSession` keeps the Nous tokens in the Keychain and refreshes them. Nous refresh tokens are single-use, so only one refresh runs at a time. The GitHub CLI token comes from `gh auth token`, which is the official way to give it to other tools.
+- The Nous sign-in uses the public `hermes-cli` client ID because Nous has no public client registration. Keep the disclosure in Settings and in the README.
+- `GitHubOAuth.clientID` is the client ID of the Lexa GitHub OAuth App (device flow on). If it is empty, Settings does not show "Sign in with GitHub".
 - Send user text to a CLI through stdin. Do not put user text in argv.
 - Write all user-facing text (UI, error messages, README) in ASD-STE100 Simplified Technical English:
   - Use approved words with their approved meanings. Software terms (API key, model, provider, shortcut, CLI) are technical nouns. Click, type, press, copy, paste, install, highlight, and translate are technical verbs.

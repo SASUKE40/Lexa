@@ -74,6 +74,7 @@ private struct ProviderSettingsView: View {
     @State private var status: BackendStatus?
     @State private var isTesting = false
     @State private var isFetching = false
+    @State private var fetchError: String?
     /// nil while searching, "" when not found.
     @State private var detectedCLI: String?
 
@@ -130,8 +131,12 @@ private struct ProviderSettingsView: View {
         let showsKey = provider.needsKey || provider.id == Provider.custom.id
         if showsKey || provider.allowsBaseURLEdit {
             Section {
+                if !provider.signIn.isEmpty {
+                    ProviderSignInView(state: state, provider: provider, apiKey: $apiKey, onSignedIn: test)
+                }
                 if showsKey {
-                    SecureField("API Key", text: $apiKey, prompt: Text(provider.needsKey ? "Paste your key" : "Optional"))
+                    SecureField("API Key", text: $apiKey,
+                                prompt: Text(!provider.signIn.isEmpty ? "Or paste an API key" : provider.needsKey ? "Paste your key" : "Optional"))
                 }
                 if provider.allowsBaseURLEdit {
                     TextField("Base URL", text: binding(\.baseURLs, default: provider.baseURL),
@@ -140,9 +145,12 @@ private struct ProviderSettingsView: View {
             } header: {
                 Text("Account")
             } footer: {
-                if let url = provider.keyURL {
-                    Link(provider.needsKey ? "Get a free API key ↗" : "Download \(provider.name) ↗", destination: url)
-                        .font(.callout)
+                VStack(alignment: .leading, spacing: 4) {
+                    if let note = signInNote { Footer(note) }
+                    if let url = provider.keyURL {
+                        Link(provider.needsKey ? "Get a free API key ↗" : "Download \(provider.name) ↗", destination: url)
+                            .font(.callout)
+                    }
                 }
             }
         }
@@ -206,23 +214,16 @@ private struct ProviderSettingsView: View {
                               prompt: Text(provider.isCLI ? "Default" : "model-id"))
                         .labelsHidden()
                         .multilineTextAlignment(.trailing)
-                    Menu {
-                        ForEach(modelChoices, id: \.self) { model in
-                            Button(model) { preferences.models[provider.id] = model }
-                        }
-                        if !provider.isCLI {
-                            if !modelChoices.isEmpty { Divider() }
-                            Button("Download the Model List", action: fetchModels)
-                                .disabled(isFetching)
-                        }
-                    } label: {
-                        Image(systemName: "chevron.up.chevron.down")
-                    }
-                    .menuStyle(.button)
-                    .buttonStyle(.borderless)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-                    .help("Select a model")
+                    ModelPicker(
+                        models: modelChoices,
+                        selection: preferences.model(for: provider),
+                        canDownload: !provider.isCLI,
+                        downloadOnOpen: fetchedModels.isEmpty,
+                        isDownloading: isFetching,
+                        error: fetchError,
+                        onDownload: fetchModels,
+                        onSelect: { preferences.models[provider.id] = $0 }
+                    )
                 }
             }
         } header: {
@@ -233,7 +234,7 @@ private struct ProviderSettingsView: View {
             } else if isFetching {
                 Footer("Lexa downloads the model list. Wait.")
             } else if !fetchedModels.isEmpty {
-                Footer("\(fetchedModels.count) models are available. Select a model from the menu.")
+                Footer("\(fetchedModels.count) models are available. Click the arrows to find a model by name.")
             }
         }
     }
@@ -268,6 +269,19 @@ private struct ProviderSettingsView: View {
 
     // MARK: Helpers
 
+    private var signInNote: String? {
+        if provider.signIn.contains(.openRouter) {
+            return "The sign-in makes a new API key in your OpenRouter account. You can delete the key at openrouter.ai/keys."
+        }
+        if provider.signIn.contains(.nousPortal) {
+            return "The Nous Portal sign-in uses the public client ID of Hermes Agent. Nous Research did not give Lexa permission for this sign-in, and it can stop at any time."
+        }
+        if provider.signIn.contains(.gitHubCLI) {
+            return "The sign-in gives a GitHub token. Lexa keeps the token in the macOS Keychain."
+        }
+        return nil
+    }
+
     private var signInCommand: String {
         provider.kind == .claudeCLI ? "claude auth login" : "codex login"
     }
@@ -293,6 +307,7 @@ private struct ProviderSettingsView: View {
     private func load() {
         apiKey = state.apiKey(for: provider)
         fetchedModels = []
+        fetchError = nil
         status = nil
     }
 
@@ -322,12 +337,13 @@ private struct ProviderSettingsView: View {
         state.setAPIKey(apiKey, for: provider)
         let backend = state.makeBackend(for: provider)
         isFetching = true
+        fetchError = nil
         Task {
             do {
                 fetchedModels = try await backend.listModels()
-                if fetchedModels.isEmpty { status = .problem("The provider sent no models.") }
+                if fetchedModels.isEmpty { fetchError = "The provider sent no models." }
             } catch {
-                status = .problem(error.localizedDescription)
+                fetchError = error.localizedDescription
             }
             isFetching = false
         }

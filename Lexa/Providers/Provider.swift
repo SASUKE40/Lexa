@@ -12,6 +12,13 @@ nonisolated enum ProviderGroup: String, CaseIterable, Sendable {
     case subscription = "Subscriptions"
 }
 
+nonisolated enum SignInMethod: Sendable, Hashable {
+    case openRouter
+    case nousPortal
+    case gitHub
+    case gitHubCLI
+}
+
 nonisolated struct Provider: Identifiable, Hashable, Sendable {
     let id: String
     let name: String
@@ -26,6 +33,8 @@ nonisolated struct Provider: Identifiable, Hashable, Sendable {
     var extraHeaders: [String: String] = [:]
     /// Name of the CLI binary for subscription providers.
     var executable = ""
+    /// Ways to sign in instead of pasting an API key.
+    var signIn: [SignInMethod] = []
 
     var isCLI: Bool { kind != .openAICompatible }
     var allowsBaseURLEdit: Bool { kind == .openAICompatible && group == .local }
@@ -38,14 +47,16 @@ nonisolated extension Provider {
         suggestedModels: ["openrouter/free"],
         keyURL: URL(string: "https://openrouter.ai/keys"), needsKey: true,
         note: "Many models are free. The \"openrouter/free\" model selects a free model for you.",
-        extraHeaders: ["HTTP-Referer": "https://github.com/SASUKE40/Lexa", "X-Title": "Lexa"])
+        extraHeaders: ["HTTP-Referer": "https://github.com/SASUKE40/Lexa", "X-Title": "Lexa"],
+        signIn: [.openRouter])
 
     static let nous = Provider(
         id: "nous", name: "Nous Portal", kind: .openAICompatible, group: .free,
         baseURL: "https://inference-api.nousresearch.com/v1", defaultModel: "Hermes-4-70B",
         suggestedModels: ["Hermes-4-70B", "Hermes-4-405B"],
         keyURL: URL(string: "https://portal.nousresearch.com"), needsKey: true,
-        note: "Hermes models from Nous Research.")
+        note: "Sign in with your Nous Portal subscription, or use an API key.",
+        signIn: [.nousPortal])
 
     static let groq = Provider(
         id: "groq", name: "Groq", kind: .openAICompatible, group: .free,
@@ -80,7 +91,8 @@ nonisolated extension Provider {
         baseURL: "https://models.github.ai/inference", defaultModel: "openai/gpt-4.1-mini",
         suggestedModels: ["openai/gpt-4.1-mini", "openai/gpt-4.1", "meta/llama-3.3-70b-instruct"],
         keyURL: URL(string: "https://github.com/settings/personal-access-tokens"), needsKey: true,
-        note: "Use a GitHub token that has the \"models: read\" permission.")
+        note: "Sign in with GitHub, or use a GitHub token that has the \"models: read\" permission.",
+        signIn: [.gitHub, .gitHubCLI])
 
     static let ollama = Provider(
         id: "ollama", name: "Ollama", kind: .openAICompatible, group: .local,
@@ -101,14 +113,14 @@ nonisolated extension Provider {
 
     static let codex = Provider(
         id: "codex", name: "ChatGPT (Codex CLI)", kind: .codexCLI, group: .subscription,
-        suggestedModels: ["gpt-5.4-mini", "gpt-5.4"],
+        defaultModel: CodexModels.available().first ?? "", suggestedModels: CodexModels.available(),
         keyURL: URL(string: "https://developers.openai.com/codex/cli"),
         note: "Uses your ChatGPT plan through the codex CLI. It is slower than an API provider.",
         executable: "codex")
 
     static let claude = Provider(
         id: "claude", name: "Claude (Claude Code CLI)", kind: .claudeCLI, group: .subscription,
-        defaultModel: "haiku", suggestedModels: ["haiku", "sonnet", "opus"],
+        defaultModel: "opus", suggestedModels: ["opus", "fable", "sonnet", "haiku"],
         keyURL: URL(string: "https://claude.com/product/claude-code"),
         note: "Uses your Claude plan through the claude CLI. It is slower than an API provider.",
         executable: "claude")

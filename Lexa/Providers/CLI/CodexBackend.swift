@@ -76,7 +76,7 @@ nonisolated struct CodexBackend: LLMBackend {
     }
 
     func listModels() async throws -> [String] {
-        Provider.codex.suggestedModels
+        CodexModels.available()
     }
 
     static func friendly(_ message: String) -> String {

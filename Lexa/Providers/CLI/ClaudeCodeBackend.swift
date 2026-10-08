@@ -15,6 +15,7 @@ nonisolated struct ClaudeCodeBackend: LLMBackend {
             "--include-partial-messages",
             "--verbose",
             "--system-prompt", system,
+            "--effort", "low",
             "--tools", "",
             "--strict-mcp-config",
             "--disable-slash-commands",

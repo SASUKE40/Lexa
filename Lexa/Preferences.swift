@@ -29,6 +29,14 @@ final class Preferences {
         autoRun = defaults.object(forKey: Keys.autoRun) as? Bool ?? true
         hasCompletedSetup = defaults.bool(forKey: Keys.setup)
         hotKey = defaults.data(forKey: Keys.hotKey).flatMap { try? JSONDecoder().decode(HotKeyCombo.self, from: $0) } ?? .default
+
+        // Version 2 moves ChatGPT and Claude to their newest models, so old saved choices are cleared once.
+        if defaults.integer(forKey: Keys.modelDefaults) < 2 {
+            models[Provider.claude.id] = nil
+            models[Provider.codex.id] = nil
+            defaults.set(models, forKey: Keys.models)
+            defaults.set(2, forKey: Keys.modelDefaults)
+        }
     }
 
     var provider: Provider { Provider.with(id: providerID) }
@@ -51,5 +59,6 @@ final class Preferences {
         static let autoRun = "autoRun"
         static let setup = "hasCompletedSetup"
         static let hotKey = "hotKey"
+        static let modelDefaults = "modelDefaultsVersion"
     }
 }

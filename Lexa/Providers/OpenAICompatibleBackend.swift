@@ -5,6 +5,10 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
     let baseURL: String
     let apiKey: String
     let model: String
+    /// Gives a fresh bearer token for each request (Nous Portal sign-in). Used instead of `apiKey`.
+    var tokenProvider: (@Sendable () async throws -> String)?
+
+    private var hasCredential: Bool { tokenProvider != nil || !apiKey.isEmpty }
 
     static func endpoint(_ baseURL: String, _ path: String) -> URL? {
         var base = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -15,7 +19,7 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
 
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<TextUpdate, Error> {
         Self.makeStream { continuation in
-            let urlRequest = try makeChatRequest(request, stream: true)
+            let urlRequest = try await makeChatRequest(request, stream: true)
             let (bytes, response) = try await perform { try await URLSession.shared.bytes(for: urlRequest) }
             let http = response as? HTTPURLResponse
             let status = http?.statusCode ?? 0
@@ -53,7 +57,7 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
     }
 
     func test() async -> BackendStatus {
-        if provider.needsKey, apiKey.isEmpty { return .problem("Add an API key.") }
+        if provider.needsKey, !hasCredential { return .problem("Sign in, or add an API key.") }
         do {
             let elapsed = try await ping(model: model)
             return .ready("Connected. Time: \(elapsed).")
@@ -65,7 +69,7 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
     func listModels() async throws -> [String] {
         guard let url = Self.endpoint(baseURL, "models") else { throw LLMError("Set a base URL.") }
         var request = URLRequest(url: url, timeoutInterval: 20)
-        applyHeaders(&request)
+        try await applyHeaders(&request)
         let (data, response) = try await perform { try await URLSession.shared.data(for: request) }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else { throw httpError(status: status, body: data, model: "") }
@@ -84,14 +88,14 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
 
     // MARK: - Helpers
 
-    private func makeChatRequest(_ request: LLMRequest, stream: Bool) throws -> URLRequest {
+    private func makeChatRequest(_ request: LLMRequest, stream: Bool) async throws -> URLRequest {
         guard let url = Self.endpoint(baseURL, "chat/completions") else { throw LLMError("Set a base URL for \(provider.name).") }
         guard !request.model.isEmpty else { throw LLMError("Select a model for \(provider.name) in Settings.") }
-        if provider.needsKey, apiKey.isEmpty { throw LLMError("Add your \(provider.name) API key in Settings.") }
+        if provider.needsKey, !hasCredential { throw LLMError("Sign in to \(provider.name) in Settings, or add an API key.") }
 
         var urlRequest = URLRequest(url: url, timeoutInterval: 120)
         urlRequest.httpMethod = "POST"
-        applyHeaders(&urlRequest)
+        try await applyHeaders(&urlRequest)
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = [
             "model": request.model,
@@ -106,8 +110,9 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
         return urlRequest
     }
 
-    private func applyHeaders(_ request: inout URLRequest) {
-        if !apiKey.isEmpty { request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization") }
+    private func applyHeaders(_ request: inout URLRequest) async throws {
+        let token = try await tokenProvider?() ?? apiKey
+        if !token.isEmpty { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         for (name, value) in provider.extraHeaders { request.setValue(value, forHTTPHeaderField: name) }
     }
 
