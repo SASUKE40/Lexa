@@ -15,6 +15,7 @@ final class AppState {
     }
 
     let preferences = Preferences()
+    let updater = Updater()
     var phase: Phase = .idle
     var action: WritingAction = .fix
     var original = ""
@@ -47,6 +48,7 @@ final class AppState {
     func start() {
         hotKeys.onPress = { [weak self] in self?.checkSelection() }
         registerHotKey()
+        updater.setAutomatic(preferences.findUpdates)
         if !preferences.hasCompletedSetup {
             preferences.hasCompletedSetup = true
             showSettings()
@@ -178,9 +180,22 @@ final class AppState {
 
     // MARK: - Settings & permissions
 
-    func showSettings() {
+    func showSettings(tab: SettingsTab? = nil) {
         closePanel()
-        settingsWindow.show()
+        settingsWindow.show(tab: tab)
+    }
+
+    func findUpdates() {
+        showSettings(tab: .general)
+        Task { await updater.find() }
+    }
+
+    func installUpdate() {
+        if updater.isHomebrewInstall {
+            showSettings(tab: .general)
+        } else {
+            updater.install()
+        }
     }
 
     func requestAccessibility() {

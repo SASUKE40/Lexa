@@ -33,6 +33,14 @@ The model results in the video are examples from a local test server. You can al
 
 You must have macOS 26 (or a newer version).
 
+### Homebrew
+
+```sh
+brew install --cask sasuke40/tap/lexa
+```
+
+### Download
+
 1. Download `Lexa-x.y.z.zip` from the [latest release](https://github.com/SASUKE40/Lexa/releases/latest).
 2. Open the zip file.
 3. Move `Lexa.app` to the Applications folder.
@@ -41,6 +49,15 @@ You must have macOS 26 (or a newer version).
 6. Give Accessibility access when Lexa tells you to.
 
 Apple did not notarize Lexa. Thus, macOS shows a warning when you open Lexa for the first time.
+
+### Updates
+
+Lexa looks for a new release on GitHub when it starts and one time each day. You can see the version and the update status in **Settings → General → Updates**, or click **Find Updates…** in the menu bar menu.
+
+- If you downloaded Lexa, click **Install the Update**. Lexa downloads the new version and makes sure that its SHA-256 and its code signature are correct. Then Lexa replaces the app and starts again. Your settings and your Accessibility access stay the same.
+- If you installed Lexa with Homebrew, type `brew upgrade --cask lexa`.
+
+To stop the automatic search, turn off **Find updates automatically**.
 
 ## Functions
 
@@ -129,6 +146,17 @@ make test    # Do the unit tests
 make build   # Build only (CONFIG=Debug for a Debug build)
 make dist    # Build a universal Release version and make build/dist/Lexa-x.y.z.zip
 ```
+
+### Release procedure
+
+Lexa uses semantic versions (`MAJOR.MINOR.PATCH`) and Git tags (`vX.Y.Z`).
+
+1. Set the new version: `make bump V=1.0.3`. This command also increases the build number.
+2. Commit the changes.
+3. Write the release notes in a Markdown file.
+4. Publish: `make release NOTES=notes.md`. This command builds the zip, makes the GitHub release, and updates the Homebrew cask in [SASUKE40/homebrew-tap](https://github.com/SASUKE40/homebrew-tap).
+
+The in-app update uses the `Lexa-x.y.z.zip` and `Lexa-x.y.z.zip.sha256` files of the release. Sign all releases with the same certificate. If the signature changes, the in-app update does not install the release.
 
 You can also open `Lexa.xcodeproj` in Xcode and press ⌘R.
 

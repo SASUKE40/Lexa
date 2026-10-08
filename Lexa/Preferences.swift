@@ -13,6 +13,7 @@ final class Preferences {
     var defaultActionID: String { didSet { defaults.set(defaultActionID, forKey: Keys.defaultAction) } }
     var translateLanguage: String { didSet { defaults.set(translateLanguage, forKey: Keys.language) } }
     var autoRun: Bool { didSet { defaults.set(autoRun, forKey: Keys.autoRun) } }
+    var findUpdates: Bool { didSet { defaults.set(findUpdates, forKey: Keys.findUpdates) } }
     var hasCompletedSetup: Bool { didSet { defaults.set(hasCompletedSetup, forKey: Keys.setup) } }
     var hotKey: HotKeyCombo {
         didSet { defaults.set(try? JSONEncoder().encode(hotKey), forKey: Keys.hotKey) }
@@ -27,6 +28,7 @@ final class Preferences {
         defaultActionID = defaults.string(forKey: Keys.defaultAction) ?? WritingAction.fix.id
         translateLanguage = defaults.string(forKey: Keys.language) ?? "English"
         autoRun = defaults.object(forKey: Keys.autoRun) as? Bool ?? true
+        findUpdates = defaults.object(forKey: Keys.findUpdates) as? Bool ?? true
         hasCompletedSetup = defaults.bool(forKey: Keys.setup)
         hotKey = defaults.data(forKey: Keys.hotKey).flatMap { try? JSONDecoder().decode(HotKeyCombo.self, from: $0) } ?? .default
 
@@ -57,6 +59,7 @@ final class Preferences {
         static let defaultAction = "defaultAction"
         static let language = "translateLanguage"
         static let autoRun = "autoRun"
+        static let findUpdates = "findUpdates"
         static let setup = "hasCompletedSetup"
         static let hotKey = "hotKey"
         static let modelDefaults = "modelDefaultsVersion"

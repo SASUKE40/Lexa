@@ -16,7 +16,9 @@ else
 SIGN = @echo "note: ad-hoc signed; run 'make signing' once so Accessibility access survives rebuilds:"
 endif
 
-.PHONY: build test run clean icon signing dist
+BUILD_NUMBER := $(shell sed -n 's/.*CURRENT_PROJECT_VERSION = \(.*\);/\1/p' $(PROJECT)/project.pbxproj | head -1)
+
+.PHONY: build test run clean icon signing dist version bump release
 
 build:
 	$(XCODEBUILD) -configuration $(CONFIG) build
@@ -46,3 +48,18 @@ icon:
 
 clean:
 	rm -rf $(DERIVED)
+
+version:
+	@echo "$(VERSION) ($(BUILD_NUMBER))"
+
+# Sets the version and increases the build number. Usage: make bump V=1.0.3
+bump:
+	@test -n "$(V)" || { echo "Usage: make bump V=x.y.z"; exit 1; }
+	sed -i '' 's/MARKETING_VERSION = .*;/MARKETING_VERSION = $(V);/' $(PROJECT)/project.pbxproj
+	sed -i '' 's/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = $(shell echo $$(($(BUILD_NUMBER) + 1)));/' $(PROJECT)/project.pbxproj
+	@$(MAKE) --no-print-directory version
+
+# Publishes the GitHub release and updates the Homebrew cask. Usage: make release NOTES=notes.md
+release:
+	@test -n "$(NOTES)" || { echo "Usage: make release NOTES=release-notes.md"; exit 1; }
+	./scripts/release.sh "$(NOTES)"

@@ -11,7 +11,7 @@ final class SettingsWindowController {
         self.state = state
     }
 
-    func show() {
+    func show(tab: SettingsTab? = nil) {
         if window == nil {
             let tabs = SettingsTabViewController()
             tabs.tabStyle = .toolbar
@@ -24,9 +24,17 @@ final class SettingsWindowController {
             window.center()
             self.window = window
         }
+        if let tab, let tabs = window?.contentViewController as? NSTabViewController {
+            tabs.selectedTabViewItemIndex = tab.rawValue
+        }
         NSApp.activate()
         window?.makeKeyAndOrderFront(nil)
     }
+}
+
+enum SettingsTab: Int {
+    case provider
+    case general
 }
 
 private final class SettingsTabViewController: NSTabViewController {
@@ -399,6 +407,21 @@ private struct GeneralSettingsView: View {
                     ForEach(WritingAction.languages, id: \.self) { Text($0).tag($0) }
                 }
                 Toggle("Start the default action immediately", isOn: $preferences.autoRun)
+            }
+
+            Section {
+                LabeledContent("Version") {
+                    Text(AppInfo.displayVersion).textSelection(.enabled)
+                }
+                Toggle("Find updates automatically", isOn: $preferences.findUpdates)
+                    .onChange(of: preferences.findUpdates) { _, enabled in state.updater.setAutomatic(enabled) }
+                UpdateStatusRow(updater: state.updater)
+            } header: {
+                Text("Updates")
+            } footer: {
+                if let date = state.updater.lastSearch {
+                    Footer("Lexa looked for updates \(date.formatted(.relative(presentation: .named))).")
+                }
             }
 
             Section {

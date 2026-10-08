@@ -22,8 +22,14 @@ struct MenuBarView: View {
             Text("Another app uses the \(hotKey.display) shortcut")
         }
 
+        if let release = state.updater.available {
+            Button("Install Lexa \(release.version.description)…") { state.installUpdate() }
+        }
+
         Divider()
 
+        Text("Lexa \(AppInfo.version)")
+        Button("Find Updates…") { state.findUpdates() }
         Button("Settings…") { state.showSettings() }
             .keyboardShortcut(",")
         Button("Quit Lexa") { NSApp.terminate(nil) }
