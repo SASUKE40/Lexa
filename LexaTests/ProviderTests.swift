@@ -45,7 +45,7 @@ struct ProviderTests {
         let request = PromptBuilder.request(action: .translate("German"), text: "Hello", model: "m")
         #expect(request.user == "<text>\nHello\n</text>")
         #expect(request.system.contains("German"))
-        #expect(request.system.contains("ONLY the revised text"))
+        #expect(request.system.contains("Send ONLY the changed text"))
         #expect(request.model == "m")
     }
 

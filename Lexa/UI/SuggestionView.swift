@@ -115,7 +115,7 @@ struct SuggestionView: View {
             EmptyView()
         case .needsAccessibility:
             message(
-                "Lexa needs Accessibility access to read and replace the text you select.",
+                "Lexa must have Accessibility access to read and replace the text that you select.",
                 systemImage: "hand.raised.fill", color: .orange
             ) {
                 Button("Open System Settings") { state.requestAccessibility() }
@@ -123,7 +123,7 @@ struct SuggestionView: View {
             }
         case .noSelection:
             message(
-                "Select some text in any app, then press \(state.preferences.hotKey.display).",
+                "Select text in an app. Then press \(state.preferences.hotKey.display).",
                 systemImage: "text.cursor", color: .secondary
             ) { EmptyView() }
         case .ready:
@@ -134,7 +134,7 @@ struct SuggestionView: View {
             if state.liveText.isEmpty {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
-                    Text(state.provider.isCLI ? "Asking \(state.provider.name)…" : "Thinking…")
+                    Text("Lexa sent the text to \(state.provider.isCLI ? state.provider.name : "the model"). Wait for the result.")
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
@@ -145,7 +145,7 @@ struct SuggestionView: View {
             }
         case .done:
             if state.isUnchanged {
-                Label("Looks good. No changes needed.", systemImage: "checkmark.seal.fill")
+                Label("The text is correct. No changes are necessary.", systemImage: "checkmark.seal.fill")
                     .foregroundStyle(.green)
                     .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
             } else if state.action.showsDiff, state.showChanges {
@@ -185,7 +185,7 @@ struct SuggestionView: View {
                     Image(systemName: state.showChanges ? "eye.slash" : "eye")
                 }
                 .buttonStyle(.borderless)
-                .help(state.showChanges ? "Show result only" : "Show changes")
+                .help(state.showChanges ? "Show only the result" : "Show the changes")
             }
             Spacer()
             if state.phase == .working {
@@ -194,7 +194,7 @@ struct SuggestionView: View {
             Button(state.copied ? "Copied" : "Copy") { state.copyResult() }
                 .keyboardShortcut("c", modifiers: .command)
                 .disabled(state.phase != .done)
-            Button("Retry") { state.retry() }
+            Button("Try Again") { state.retry() }
                 .keyboardShortcut("r", modifiers: .command)
                 .disabled(state.phase == .ready)
             Button("Replace") { state.replace() }

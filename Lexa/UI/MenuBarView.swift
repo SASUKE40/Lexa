@@ -6,20 +6,20 @@ struct MenuBarView: View {
     var body: some View {
         let hotKey = state.preferences.hotKey
         if let key = hotKey.keyEquivalent {
-            Button("Check Selection") { state.checkSelection(fromMenu: true) }
+            Button("Use Lexa on Selected Text") { state.checkSelection(fromMenu: true) }
                 .keyboardShortcut(key, modifiers: hotKey.eventModifiers)
         } else {
-            Button("Check Selection (\(hotKey.display))") { state.checkSelection(fromMenu: true) }
+            Button("Use Lexa on Selected Text (\(hotKey.display))") { state.checkSelection(fromMenu: true) }
         }
 
         Divider()
 
         Text(state.providerSummary)
         if !state.accessibilityGranted {
-            Button("Grant Accessibility Access…") { state.requestAccessibility() }
+            Button("Give Accessibility Access…") { state.requestAccessibility() }
         }
         if !state.hotKeyRegistered {
-            Text("Shortcut \(hotKey.display) is in use by another app")
+            Text("Another app uses the \(hotKey.display) shortcut")
         }
 
         Divider()

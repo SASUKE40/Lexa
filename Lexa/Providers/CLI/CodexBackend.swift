@@ -5,8 +5,8 @@ nonisolated struct CodexBackend: LLMBackend {
     let model: String
     let pathOverride: String
 
-    static let missingMessage = "Codex CLI not found. Install it from developers.openai.com/codex/cli or set its path in Settings."
-    static let signInMessage = "Codex isn't signed in. Open Terminal and run: codex login"
+    static let missingMessage = "Lexa cannot find the Codex CLI. Install it from developers.openai.com/codex/cli. Or select its path in Settings."
+    static let signInMessage = "Codex is not signed in. In Terminal, type this command: codex login"
 
     static func arguments(model: String, workspace: String) -> [String] {
         var arguments = [
@@ -69,7 +69,7 @@ nonisolated struct CodexBackend: LLMBackend {
             let status = try await CLIRunner.run(executable, ["login", "status"], timeout: .seconds(20))
             guard status.status == 0 else { return .problem(Self.signInMessage) }
             let elapsed = try await ping(model: model)
-            return .ready("Signed in · replied in \(elapsed)")
+            return .ready("Signed in. Time: \(elapsed).")
         } catch {
             return .problem(error.localizedDescription)
         }
@@ -85,9 +85,9 @@ nonisolated struct CodexBackend: LLMBackend {
             return signInMessage
         }
         if lower.contains("usage limit") || lower.contains("rate limit") || lower.contains("429") {
-            return "You've hit your ChatGPT plan's Codex usage limit. \(message.prefix(200))"
+            return "You are at the Codex usage limit of your ChatGPT plan. \(message.prefix(200))"
         }
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "Codex failed without an error message." : String(trimmed.suffix(400))
+        return trimmed.isEmpty ? "Codex stopped, but it did not send an error message." : String(trimmed.suffix(400))
     }
 }

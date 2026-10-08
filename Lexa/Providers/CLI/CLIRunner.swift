@@ -17,7 +17,7 @@ nonisolated struct CLIProcessError: LocalizedError, Sendable {
 
     var errorDescription: String? {
         let detail = String(result.diagnostics.suffix(400))
-        return detail.isEmpty ? "The command exited with status \(result.status)." : detail
+        return detail.isEmpty ? "The command stopped with status \(result.status)." : detail
     }
 }
 
@@ -53,7 +53,7 @@ nonisolated enum CLIRunner {
             try Task.checkCancellation()
             if status != 0 { try? await Task.sleep(for: .milliseconds(50)) }
             if process.timedOut {
-                throw LLMError("\(executable.lastPathComponent) didn't finish within \(timeout.components.seconds) seconds.")
+                throw LLMError("\(executable.lastPathComponent) did not complete in \(timeout.components.seconds) seconds.")
             }
             return CLIResult(status: status, stdout: lines.joined(separator: "\n"), stderr: process.stderrText)
         } onCancel: {
@@ -133,7 +133,7 @@ private nonisolated final class ProcessHandle: @unchecked Sendable {
         do {
             try process.run()
         } catch {
-            throw LLMError("Couldn't launch \(process.executableURL?.path ?? "process"): \(error.localizedDescription)")
+            throw LLMError("Lexa cannot start \(process.executableURL?.path ?? "the process"): \(error.localizedDescription)")
         }
     }
 

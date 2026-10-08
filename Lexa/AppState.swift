@@ -129,7 +129,7 @@ final class AppState {
                 try Task.checkCancellation()
                 let cleaned = ResponseCleaner.clean(output, original: original)
                 guard !cleaned.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                    throw LLMError("The model returned an empty response. Try again or pick another model.")
+                    throw LLMError("The model sent an empty result. Try again, or select a different model.")
                 }
                 result = cleaned
                 segments = action.showsDiff ? TextDiff.diff(original, cleaned) : []

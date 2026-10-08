@@ -25,7 +25,7 @@ nonisolated enum JSONLine {
 
     static func errorMessage(_ object: [String: Any]) -> String? {
         if let error = object["error"] as? [String: Any] {
-            return (error["message"] as? String) ?? (error["code"] as? String) ?? "Unknown error"
+            return (error["message"] as? String) ?? (error["code"] as? String) ?? "Unknown error."
         }
         if let error = object["error"] as? String { return error }
         if let detail = object["detail"] as? String { return detail }
@@ -48,7 +48,7 @@ nonisolated enum OpenAIStreamParser {
     /// A non-streaming JSON response body.
     static func parse(body: Data) -> StreamEvent {
         guard let object = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any] else {
-            return .error("Unexpected response from server.")
+            return .error("The server sent a result that Lexa cannot read.")
         }
         if let message = JSONLine.errorMessage(object) { return .error(message) }
         return content(object, delta: false)
@@ -110,9 +110,9 @@ nonisolated enum CodexStreamParser {
             return type == "item.completed" ? .final(text) : .snapshot(text)
         case "turn.failed":
             let message = (object["error"] as? [String: Any])?["message"] as? String
-            return .error(message ?? "Codex turn failed.")
+            return .error(message ?? "The Codex task stopped.")
         case "error":
-            return .error(object["message"] as? String ?? "Codex error.")
+            return .error(object["message"] as? String ?? "Codex sent an error.")
         case "turn.completed":
             return .done
         default:

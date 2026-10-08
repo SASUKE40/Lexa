@@ -162,7 +162,7 @@ private struct ProviderSettingsView: View {
                         Image(systemName: "doc.on.doc")
                     }
                     .buttonStyle(.borderless)
-                    .help("Copy command")
+                    .help("Copy the command")
                 }
             }
             LabeledContent("Command-line tool") {
@@ -180,9 +180,9 @@ private struct ProviderSettingsView: View {
                             .truncationMode(.head)
                             .help(path)
                     }
-                    Button("Choose…", action: chooseCLI)
+                    Button("Select…", action: chooseCLI)
                     if !preferences.cliPath(for: provider).isEmpty {
-                        Button("Reset") { preferences.cliPaths[provider.id] = nil }
+                        Button("Clear") { preferences.cliPaths[provider.id] = nil }
                     }
                 }
             }
@@ -190,7 +190,7 @@ private struct ProviderSettingsView: View {
             Text("Account")
         } footer: {
             VStack(alignment: .leading, spacing: 4) {
-                Footer("Lexa runs your own signed-in \(provider.executable) CLI on this Mac and never reads its credentials. For personal use under your plan's terms.")
+                Footer("Lexa starts your signed-in \(provider.executable) CLI on this Mac. Lexa does not read the credentials of the CLI. Use this alternative only for your work, and obey the terms of your plan.")
                 if let url = provider.keyURL {
                     Link("Install the \(provider.executable) CLI ↗", destination: url).font(.callout)
                 }
@@ -212,7 +212,7 @@ private struct ProviderSettingsView: View {
                         }
                         if !provider.isCLI {
                             if !modelChoices.isEmpty { Divider() }
-                            Button(isFetching ? "Fetching…" : "Fetch Available Models", action: fetchModels)
+                            Button("Download the Model List", action: fetchModels)
                                 .disabled(isFetching)
                         }
                     } label: {
@@ -222,18 +222,18 @@ private struct ProviderSettingsView: View {
                     .buttonStyle(.borderless)
                     .menuIndicator(.hidden)
                     .fixedSize()
-                    .help("Choose a model")
+                    .help("Select a model")
                 }
             }
         } header: {
             Text("Model")
         } footer: {
             if provider.isCLI {
-                Footer("Leave empty to use the CLI's default model.")
+                Footer("If this field is empty, the CLI uses its default model.")
             } else if isFetching {
-                Footer("Fetching models…")
+                Footer("Lexa downloads the model list. Wait.")
             } else if !fetchedModels.isEmpty {
-                Footer("\(fetchedModels.count) models available. Pick one from the menu.")
+                Footer("\(fetchedModels.count) models are available. Select a model from the menu.")
             }
         }
     }
@@ -243,7 +243,7 @@ private struct ProviderSettingsView: View {
             HStack(spacing: 10) {
                 switch status {
                 case nil:
-                    Text(isTesting ? "Testing…" : "Not tested yet")
+                    Text(isTesting ? "Wait for the test result." : "No test result.")
                         .foregroundStyle(.secondary)
                 case .ready(let message):
                     Label {
@@ -260,7 +260,7 @@ private struct ProviderSettingsView: View {
                 }
                 Spacer(minLength: 8)
                 if isTesting { ProgressView().controlSize(.small) }
-                Button("Test Connection", action: test)
+                Button("Connection Test", action: test)
                     .disabled(isTesting)
             }
         }
@@ -298,7 +298,7 @@ private struct ProviderSettingsView: View {
 
     private func chooseCLI() {
         let panel = NSOpenPanel()
-        panel.title = "Choose the \(provider.executable) executable"
+        panel.title = "Select the \(provider.executable) executable file"
         panel.canChooseDirectories = false
         panel.showsHiddenFiles = true
         panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser.appending(path: ".local/bin")
@@ -325,7 +325,7 @@ private struct ProviderSettingsView: View {
         Task {
             do {
                 fetchedModels = try await backend.listModels()
-                if fetchedModels.isEmpty { status = .problem("No models returned.") }
+                if fetchedModels.isEmpty { status = .problem("The provider sent no models.") }
             } catch {
                 status = .problem(error.localizedDescription)
             }
@@ -359,20 +359,20 @@ private struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("Check selection") {
+                LabeledContent("Use Lexa") {
                     HotKeyRecorder(state: state)
                 }
             } header: {
                 Text("Shortcut")
             } footer: {
                 if !state.hotKeyRegistered {
-                    Label("This shortcut is taken by another app. Pick a different one.", systemImage: "exclamationmark.triangle.fill")
+                    Label("Another app uses this shortcut. Select a different shortcut.", systemImage: "exclamationmark.triangle.fill")
                         .font(.callout)
                         .foregroundStyle(.orange)
                 }
             }
 
-            Section("Writing") {
+            Section("Text") {
                 Picker("Default action", selection: $preferences.defaultActionID) {
                     ForEach(WritingAction.defaultChoices) { action in
                         Text(action.title).tag(action.id)
@@ -382,11 +382,11 @@ private struct GeneralSettingsView: View {
                 Picker("Translate to", selection: $preferences.translateLanguage) {
                     ForEach(WritingAction.languages, id: \.self) { Text($0).tag($0) }
                 }
-                Toggle("Run default action immediately", isOn: $preferences.autoRun)
+                Toggle("Start the default action immediately", isOn: $preferences.autoRun)
             }
 
             Section {
-                Toggle("Launch at login", isOn: $launchAtLogin)
+                Toggle("Start Lexa at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in
                         do {
                             if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
@@ -396,16 +396,16 @@ private struct GeneralSettingsView: View {
                     }
                 LabeledContent("Accessibility") {
                     if state.accessibilityGranted {
-                        Label("Granted", systemImage: "checkmark.circle.fill")
+                        Label("Access given", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                     } else {
-                        Button("Grant Access…") { state.requestAccessibility() }
+                        Button("Give Access…") { state.requestAccessibility() }
                     }
                 }
             } header: {
                 Text("System")
             } footer: {
-                Footer("Accessibility lets Lexa copy your selection and paste the result. Your text is sent only to the provider you choose.")
+                Footer("With Accessibility access, Lexa can copy the selected text and paste the result. Lexa sends your text only to the provider that you select.")
             }
         }
         .settingsPage()
@@ -428,11 +428,11 @@ private struct HotKeyRecorder: View {
             Button {
                 isRecording ? stop() : start()
             } label: {
-                Text(isRecording ? "Press keys…" : state.preferences.hotKey.display)
+                Text(isRecording ? "Press a shortcut" : state.preferences.hotKey.display)
                     .font(.body.monospaced())
                     .frame(minWidth: 90)
             }
-            .help(isRecording ? "Press a shortcut, or Esc to cancel" : "Click to change")
+            .help(isRecording ? "Press a shortcut. Press Esc to cancel." : "Click to change the shortcut")
             if state.preferences.hotKey != .default, !isRecording {
                 Button {
                     state.preferences.hotKey = .default
@@ -441,7 +441,7 @@ private struct HotKeyRecorder: View {
                     Image(systemName: "arrow.counterclockwise")
                 }
                 .buttonStyle(.borderless)
-                .help("Reset to \(HotKeyCombo.default.display)")
+                .help("Set the shortcut to \(HotKeyCombo.default.display)")
             }
         }
         .onDisappear(perform: stop)

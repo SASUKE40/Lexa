@@ -46,7 +46,7 @@ nonisolated extension LLMBackend {
             }
         }
         if ResponseCleaner.stripThinking(reply).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            throw LLMError("Connected, but the model returned an empty reply.")
+            throw LLMError("The connection is good, but the model sent an empty result.")
         }
         let elapsed = clock.now - start
         return elapsed.formatted(.units(allowed: [.seconds], fractionalPart: .show(length: 1)))

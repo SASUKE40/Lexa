@@ -5,8 +5,8 @@
 <h1 align="center">Lexa</h1>
 
 <p align="center">
-  A tiny, native Grammarly alternative for macOS.<br>
-  Bring a free LLM key, a local model, or the ChatGPT / Claude subscription you already have.
+  A small Grammarly alternative for macOS.<br>
+  Use a free LLM key, a local model, or your ChatGPT or Claude subscription.
 </p>
 
 <p align="center">
@@ -16,80 +16,93 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
 </p>
 
-Select text in any app, press **⌥⌘G**, and Lexa shows a corrected version with the changes highlighted. Press **↩** to replace your selection.
+Select text in an app. Then press **⌥⌘G**. Lexa shows a corrected version of the text and highlights the changes. Press **↩** to replace the selected text.
 
-## Features
+## Functions
 
-- **Fix**: grammar, spelling and punctuation, with minimal edits
-- **Improve**: clearer, smoother wording
-- **Tone**: Formal, Friendly, Concise or Confident
-- **Translate**: into 15 languages
-- Word-level diff, streaming output, and a Liquid Glass popup
-- Menu bar only (no Dock icon), with a configurable shortcut and launch at login
-- Restores your clipboard after copying and pasting
+- **Correct**: Lexa corrects the grammar, spelling, and punctuation. It makes only the necessary changes.
+- **Make Clear**: Lexa makes the text clear and easy to read.
+- **Tone**: Lexa changes the text to a Formal, Friendly, Short, or Confident tone.
+- **Translate**: Lexa translates the text into one of 15 languages.
+- Lexa shows each changed word in color.
+- Lexa shows the result while the model sends it.
+- The popup window uses macOS Liquid Glass.
+- Lexa is a menu bar app. It does not show an icon in the Dock.
+- You can change the shortcut. Lexa can start at login.
+- After each copy and paste, Lexa puts the previous clipboard contents back.
 
-## Usage
+## Procedure
 
-1. Select text in any app (Mail, Notes, Slack, your browser…).
-2. Press **⌥⌘G**. The default action (Fix) runs right away.
-3. Review the highlighted changes, then:
+1. Select text in an app. For example, use Mail, Notes, Slack, or a web browser.
+2. Press **⌥⌘G**. Lexa starts the default action (Correct) immediately.
+3. Look at the highlighted changes.
+4. Use one of these keys:
 
 | Key | Action |
 |---|---|
-| ↩ | Replace the selection |
+| ↩ | Replace the selected text |
 | ⌘C | Copy the result |
-| ⌘R | Retry |
-| ⌘1 / ⌘2 | Fix / Improve |
-| Esc | Close |
+| ⌘R | Try again |
+| ⌘1 / ⌘2 | Correct / Make Clear |
+| Esc | Close the popup window |
 
-The shortcut, default action and translation language can be changed in **Settings** (menu bar icon → Settings…).
+To change the shortcut, the default action, or the language for Translate, open **Settings**. Click the menu bar icon, then click **Settings…**.
 
 ## Providers
 
-| Provider | Type | Get access |
+| Provider | Type | Access |
 |---|---|---|
-| OpenRouter | Free models (`openrouter/free` or any `:free` model) | https://openrouter.ai/keys |
+| OpenRouter | Free models (`openrouter/free` or a `:free` model) | https://openrouter.ai/keys |
 | Nous Portal | Hermes models | https://portal.nousresearch.com |
-| Groq | Free tier | https://console.groq.com/keys |
-| Cerebras | Free tier | https://cloud.cerebras.ai |
-| Google Gemini | Free tier | https://aistudio.google.com/apikey |
+| Groq | Free to use, with a rate limit | https://console.groq.com/keys |
+| Cerebras | Free to use, with a rate limit | https://cloud.cerebras.ai |
+| Google Gemini | Free to use, with a rate limit | https://aistudio.google.com/apikey |
 | Mistral | Free "Experiment" plan | https://console.mistral.ai/api-keys |
 | GitHub Models | Free with a GitHub token (`models: read`) | https://github.com/settings/personal-access-tokens |
-| Ollama / LM Studio | Local, offline, no key | https://ollama.com · https://lmstudio.ai |
-| Custom | Any OpenAI-compatible `/chat/completions` endpoint | |
-| **ChatGPT (Codex CLI)** | Your ChatGPT plan | Install `codex`, then run `codex login` |
-| **Claude (Claude Code CLI)** | Your Claude Pro/Max plan | Install `claude`, then run `claude auth login` |
+| Ollama / LM Studio | Local. An internet connection and a key are not necessary. | https://ollama.com · https://lmstudio.ai |
+| Custom | A server with an OpenAI-compatible `/chat/completions` endpoint | |
+| **ChatGPT (Codex CLI)** | Your ChatGPT plan | Install `codex`. Then type `codex login`. |
+| **Claude (Claude Code CLI)** | Your Claude Pro or Max plan | Install `claude`. Then type `claude auth login`. |
 
-API keys are stored in the macOS Keychain. Model names are editable, and **Fetch Models** lists what your key can use. Free model lineups change often.
+Lexa keeps API keys in the macOS Keychain. You can change the model name. **Download the Model List** shows the models that your key can use. The list of free models changes frequently.
 
-### About the subscription providers
+### Subscription providers
 
-For subscriptions, Lexa runs your **own signed-in CLI** on your Mac (`codex exec` / `claude -p`) and never reads, stores or sends its credentials.
+For a subscription, Lexa starts your signed-in CLI on your Mac (`codex exec` or `claude -p`). Lexa does not read, keep, or send the credentials of the CLI.
 
-The text goes to the CLI through stdin. The CLI runs in an empty temporary folder with tools disabled: Claude with `--tools ""`, Codex in a read-only sandbox. These providers take a few seconds longer than API providers.
+Lexa sends the text to the CLI through stdin. The CLI operates in an empty temporary folder, and its tools are disabled:
 
-This is for personal use under your plan's terms. Anthropic doesn't allow third-party products to route requests through Claude Free/Pro/Max credentials on behalf of their users.
+- For Claude, Lexa uses `--tools ""`.
+- For Codex, Lexa uses a read-only sandbox.
 
-## Build & run
+These providers are slower than API providers. Each result can take some seconds more.
 
-Requires macOS 26+ and Xcode 26+.
+Use this alternative only for your work, and obey the terms of your plan. Anthropic does not let other products use Claude Free, Pro, or Max credentials for their users.
+
+## Build and start
+
+You must have macOS 26 (or a newer version) and Xcode 26 (or a newer version).
 
 ```sh
-make signing # once: create a local signing certificate (keeps Accessibility access across rebuilds)
-make run     # build Release and launch
-make test    # run unit tests
-make build   # build only (CONFIG=Debug for a debug build)
+make signing # Do one time: make a local signing certificate (Lexa keeps Accessibility access after each build)
+make run     # Build the Release version and start it
+make test    # Do the unit tests
+make build   # Build only (CONFIG=Debug for a Debug build)
 ```
 
-Or open `Lexa.xcodeproj` in Xcode and press ⌘R. For development, `Lexa --demo ["some text"]` (Debug builds) opens the panel with sample text.
+You can also open `Lexa.xcodeproj` in Xcode and press ⌘R.
+
+For development, Debug builds accept `--demo ["some text"]`. This option opens the popup window with sample text.
 
 ## Permissions
 
-Lexa needs **Accessibility** access (System Settings → Privacy & Security → Accessibility) to copy the selected text and paste the result back. The global shortcut itself needs no permission.
+Lexa must have **Accessibility** access to copy the selected text and paste the result. To give access, go to **System Settings → Privacy & Security → Accessibility**. The global shortcut does not use a permission.
 
-macOS ties the Accessibility grant to the app's signature. Ad-hoc signed builds ("Sign to Run Locally", e.g. ⌘R in Xcode) get a new signature on every rebuild, so the grant stops working even though Lexa still looks enabled in System Settings.
+macOS keeps the Accessibility access for one app signature only. An ad-hoc signed build ("Sign to Run Locally", for example ⌘R in Xcode) gets a new signature after each build. Then the access stops, but System Settings continues to show Lexa as enabled.
 
-`make signing` creates a self-signed "Lexa Local Signing" certificate in your login keychain, and `make build` / `make run` then sign with it, so you only grant access once. If Lexa keeps asking, reset its entry and grant again:
+`make signing` makes a self-signed "Lexa Local Signing" certificate in your login keychain. Then `make build` and `make run` sign the app with this certificate. Thus, you give access only one time.
+
+If Lexa continues to tell you to give access, remove its entry. Then give access again:
 
 ```sh
 tccutil reset Accessibility com.sasuke40.lexa
@@ -97,7 +110,7 @@ tccutil reset Accessibility com.sasuke40.lexa
 
 ## Privacy
 
-Your text goes only to the provider you choose. Ollama and LM Studio keep everything on your Mac.
+Lexa sends your text only to the provider that you select. With Ollama or LM Studio, your text stays on your Mac.
 
 ## License
 

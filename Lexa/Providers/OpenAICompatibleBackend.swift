@@ -46,24 +46,24 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
                 switch OpenAIStreamParser.parse(body: body) {
                 case .final(let text), .snapshot(let text), .delta(let text): continuation.yield(.replace(text))
                 case .error(let message): throw LLMError(message)
-                case .done, .ignore: throw LLMError("The model returned an empty response.")
+                case .done, .ignore: throw LLMError("The model sent an empty result.")
                 }
             }
         }
     }
 
     func test() async -> BackendStatus {
-        if provider.needsKey, apiKey.isEmpty { return .problem("Add an API key first.") }
+        if provider.needsKey, apiKey.isEmpty { return .problem("Add an API key.") }
         do {
             let elapsed = try await ping(model: model)
-            return .ready("Connected · replied in \(elapsed)")
+            return .ready("Connected. Time: \(elapsed).")
         } catch {
             return .problem(error.localizedDescription)
         }
     }
 
     func listModels() async throws -> [String] {
-        guard let url = Self.endpoint(baseURL, "models") else { throw LLMError("Set a base URL first.") }
+        guard let url = Self.endpoint(baseURL, "models") else { throw LLMError("Set a base URL.") }
         var request = URLRequest(url: url, timeoutInterval: 20)
         applyHeaders(&request)
         let (data, response) = try await perform { try await URLSession.shared.data(for: request) }
@@ -86,7 +86,7 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
 
     private func makeChatRequest(_ request: LLMRequest, stream: Bool) throws -> URLRequest {
         guard let url = Self.endpoint(baseURL, "chat/completions") else { throw LLMError("Set a base URL for \(provider.name).") }
-        guard !request.model.isEmpty else { throw LLMError("Choose a model for \(provider.name) in Settings.") }
+        guard !request.model.isEmpty else { throw LLMError("Select a model for \(provider.name) in Settings.") }
         if provider.needsKey, apiKey.isEmpty { throw LLMError("Add your \(provider.name) API key in Settings.") }
 
         var urlRequest = URLRequest(url: url, timeoutInterval: 120)
@@ -119,10 +119,10 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
             case .cancelled: throw CancellationError()
             case .cannotConnectToHost, .cannotFindHost, .networkConnectionLost:
                 throw LLMError(provider.group == .local
-                    ? "Couldn't connect to \(baseURL). Is \(provider.name) running?"
-                    : "Couldn't reach \(provider.name).")
-            case .notConnectedToInternet: throw LLMError("You're offline.")
-            case .timedOut: throw LLMError("\(provider.name) took too long to respond.")
+                    ? "Lexa cannot connect to \(baseURL). Make sure that \(provider.name) is open."
+                    : "Lexa cannot connect to \(provider.name).")
+            case .notConnectedToInternet: throw LLMError("The Mac has no internet connection.")
+            case .timedOut: throw LLMError("\(provider.name) did not send a result in the permitted time.")
             default: throw LLMError(error.localizedDescription)
             }
         }
@@ -134,11 +134,11 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
             ?? ""
         let suffix = detail.isEmpty ? "" : " (\(detail))"
         switch status {
-        case 401, 403: return LLMError("\(provider.name) rejected the API key\(suffix).")
-        case 402: return LLMError("Out of credits on \(provider.name). Pick a free model\(suffix).")
-        case 404: return LLMError("Model \"\(model)\" wasn't found on \(provider.name)\(suffix).")
-        case 429: return LLMError("Rate limited by \(provider.name). Free tiers have limits; try again shortly or switch model\(suffix).")
-        default: return LLMError("\(provider.name) returned HTTP \(status)\(suffix).")
+        case 401, 403: return LLMError("\(provider.name) did not accept the API key\(suffix).")
+        case 402: return LLMError("Your \(provider.name) account has no credits. Select a free model\(suffix).")
+        case 404: return LLMError("\(provider.name) does not have the model \"\(model)\"\(suffix).")
+        case 429: return LLMError("You are at the rate limit of \(provider.name)\(suffix). Wait, then try again. Or select a different model.")
+        default: return LLMError("\(provider.name) sent HTTP error \(status)\(suffix).")
         }
     }
 }

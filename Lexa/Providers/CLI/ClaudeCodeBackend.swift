@@ -5,8 +5,8 @@ nonisolated struct ClaudeCodeBackend: LLMBackend {
     let model: String
     let pathOverride: String
 
-    static let missingMessage = "Claude Code CLI not found. Install it from claude.com/product/claude-code or set its path in Settings."
-    static let signInMessage = "Claude Code isn't signed in. Open Terminal and run: claude auth login"
+    static let missingMessage = "Lexa cannot find the Claude Code CLI. Install it from claude.com/product/claude-code. Or select its path in Settings."
+    static let signInMessage = "Claude Code is not signed in. In Terminal, type this command: claude auth login"
 
     static func arguments(system: String, model: String) -> [String] {
         var arguments = [
@@ -57,7 +57,7 @@ nonisolated struct ClaudeCodeBackend: LLMBackend {
             guard loggedIn else { return .problem(Self.signInMessage) }
             // `auth status` can report a login that has since expired, so make a real request.
             let elapsed = try await ping(model: model)
-            return .ready("Signed in · replied in \(elapsed)")
+            return .ready("Signed in. Time: \(elapsed).")
         } catch {
             return .problem(error.localizedDescription)
         }
@@ -73,9 +73,9 @@ nonisolated struct ClaudeCodeBackend: LLMBackend {
             return signInMessage
         }
         if lower.contains("usage limit") || lower.contains("rate limit") {
-            return "You've hit your Claude plan's usage limit. \(message.prefix(200))"
+            return "You are at the usage limit of your Claude plan. \(message.prefix(200))"
         }
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "Claude Code failed without an error message." : String(trimmed.suffix(400))
+        return trimmed.isEmpty ? "Claude Code stopped, but it did not send an error message." : String(trimmed.suffix(400))
     }
 }
