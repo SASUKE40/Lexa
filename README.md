@@ -1,8 +1,22 @@
-# Lexa
+<p align="center">
+  <img src="Lexa/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" width="128" height="128" alt="Lexa icon">
+</p>
 
-A small, native macOS writing assistant. Select text in any app, press **⌥⌘G**, and Lexa shows a corrected version with the changes highlighted. Press **↩** to replace your selection.
+<h1 align="center">Lexa</h1>
 
-Lexa works with free LLM providers, with local models, and with the ChatGPT or Claude subscription you already pay for.
+<p align="center">
+  A tiny, native Grammarly alternative for macOS.<br>
+  Bring a free LLM key, a local model, or the ChatGPT / Claude subscription you already have.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white" alt="macOS 26+">
+  <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
+  <img src="https://img.shields.io/badge/dependencies-none-brightgreen" alt="No dependencies">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
+</p>
+
+Select text in any app, press **⌥⌘G**, and Lexa shows a corrected version with the changes highlighted. Press **↩** to replace your selection.
 
 ## Features
 
@@ -13,6 +27,22 @@ Lexa works with free LLM providers, with local models, and with the ChatGPT or C
 - Word-level diff, streaming output, and a Liquid Glass popup
 - Menu bar only (no Dock icon), with a configurable shortcut and launch at login
 - Restores your clipboard after copying and pasting
+
+## Usage
+
+1. Select text in any app (Mail, Notes, Slack, your browser…).
+2. Press **⌥⌘G**. The default action (Fix) runs right away.
+3. Review the highlighted changes, then:
+
+| Key | Action |
+|---|---|
+| ↩ | Replace the selection |
+| ⌘C | Copy the result |
+| ⌘R | Retry |
+| ⌘1 / ⌘2 | Fix / Improve |
+| Esc | Close |
+
+The shortcut, default action and translation language can be changed in **Settings** (menu bar icon → Settings…).
 
 ## Providers
 
@@ -45,6 +75,7 @@ This is for personal use under your plan's terms. Anthropic doesn't allow third-
 Requires macOS 26+ and Xcode 26+.
 
 ```sh
+make signing # once: create a local signing certificate (keeps Accessibility access across rebuilds)
 make run     # build Release and launch
 make test    # run unit tests
 make build   # build only (CONFIG=Debug for a debug build)
@@ -56,13 +87,18 @@ Or open `Lexa.xcodeproj` in Xcode and press ⌘R. For development, `Lexa --demo 
 
 Lexa needs **Accessibility** access (System Settings → Privacy & Security → Accessibility) to copy the selected text and paste the result back. The global shortcut itself needs no permission.
 
-The app is signed ad-hoc ("Sign to Run Locally"). After each rebuild, macOS may treat it as a new app:
+macOS ties the Accessibility grant to the app's signature. Ad-hoc signed builds ("Sign to Run Locally", e.g. ⌘R in Xcode) get a new signature on every rebuild, so the grant stops working even though Lexa still looks enabled in System Settings.
 
-- You may need to toggle Lexa off and on again in the Accessibility list.
-- You may need to click *Always Allow* when Lexa reads its Keychain item.
+`make signing` creates a self-signed "Lexa Local Signing" certificate in your login keychain, and `make build` / `make run` then sign with it, so you only grant access once. If Lexa keeps asking, reset its entry and grant again:
 
-Setting a development team in Xcode avoids both.
+```sh
+tccutil reset Accessibility com.sasuke40.lexa
+```
 
 ## Privacy
 
 Your text goes only to the provider you choose. Ollama and LM Studio keep everything on your Mac.
+
+## License
+
+[MIT](LICENSE)
