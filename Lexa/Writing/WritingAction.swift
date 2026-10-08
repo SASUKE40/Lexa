@@ -67,6 +67,15 @@ nonisolated enum WritingAction: Hashable, Sendable, Identifiable {
         }
     }
 
+    var help: String {
+        switch self {
+        case .fix: "Correct the grammar, spelling, and punctuation"
+        case .improve: "Write the text again in ASD-STE100 Simplified Technical English"
+        case .tone(let tone): "Change the text to a \(tone.title.lowercased()) tone"
+        case .translate(let language): "Translate the text into \(language)"
+        }
+    }
+
     var symbol: String {
         switch self {
         case .fix: "checkmark.circle"
@@ -82,14 +91,46 @@ nonisolated enum WritingAction: Hashable, Sendable, Identifiable {
         return true
     }
 
-    var temperature: Double { self == .fix ? 0.2 : 0.5 }
+    var temperature: Double {
+        switch self {
+        case .fix, .improve: 0.2
+        case .tone, .translate: 0.5
+        }
+    }
+
+    /// Make Clear writes the text again to the ASD-STE100 Simplified Technical English rules.
+    static let simplifiedTechnicalEnglish = """
+        Write the text again in ASD-STE100 Simplified Technical English (STE), Issue 9. Obey these rules:
+        - Use only words from the STE dictionary, with their approved meaning and part of speech. For example:
+          start (not begin, commence, launch), select (not choose), necessary or must (not need, require, should), \
+        can (not may, might), let (not allow, enable), make sure (not check, verify, ensure), show (not appear, display), \
+        do (not perform), use (not utilize), get (not obtain), give (not provide), keep (not maintain), \
+        correctly (not properly), do a test (not test as a verb), aid (not help as a noun), \
+        start as a noun (not beginning), procedure (not process), occur (not happen), "if not" (not otherwise).
+        - Never use the word "fail". Write "does not", "cannot", or "if ... not" instead.
+        - You can also use technical nouns and technical verbs: names, product terms, and terms of the subject (for example: API key, click, install, server).
+        - Write a maximum of 20 words in an instruction and a maximum of 25 words in a description. Divide long sentences.
+        - Write one instruction in each sentence. Use the imperative form for instructions.
+        - Use the active voice. Use the passive voice only when you do not know who or what does the action.
+        - Use only the simple present, simple past, and simple future tenses. Do not use the "-ing" form of a verb, except as a technical noun.
+        - Do not leave out articles ("the", "a"), verbs, or the subject to make a sentence shorter.
+        - Do not make noun clusters of more than three words.
+        - Write one topic in each paragraph and a maximum of six sentences in each paragraph.
+        - Use a vertical list for complex text, such as a sequence of steps.
+        - Start a warning or a caution with a clear command or condition.
+        - Do not use contractions, idioms, or slang.
+        Keep the full meaning and all facts. Do not add new information. Correct all errors.
+        You can divide sentences and make vertical lists, even if the format changes.
+        If the text is not in English, keep its language and use the same rules.
+        Before you send the result, read it again. Replace each word that the list above does not permit (for example: fail, process, beginning, verify, launch).
+        """
 
     var instruction: String {
         switch self {
         case .fix:
             "Correct the grammar, spelling, punctuation, and capital letters. Make only the necessary changes. Keep the voice, the words, and the style of the author. Keep the original language. If the text is correct, send it with no changes."
         case .improve:
-            "Make the text clear and easy to read. Correct all errors. Keep the voice of the author and the original language. Keep the length of the text approximately the same."
+            Self.simplifiedTechnicalEnglish
         case .tone(let tone):
             tone.instruction + " Correct all errors. Keep the original language."
         case .translate(let language):

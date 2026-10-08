@@ -39,7 +39,7 @@ Apple did not notarize Lexa. Thus, macOS shows a warning when you open Lexa for 
 ## Functions
 
 - **Correct**: Lexa corrects the grammar, spelling, and punctuation. It makes only the necessary changes.
-- **Make Clear**: Lexa makes the text clear and easy to read.
+- **Make Clear**: Lexa writes the text again in [ASD-STE100 Simplified Technical English](https://www.asd-ste100.org). The result has short sentences, the active voice, and only approved words. A large model (for example, Claude Sonnet) obeys the STE rules better than a small model.
 - **Tone**: Lexa changes the text to a Formal, Friendly, Short, or Confident tone.
 - **Translate**: Lexa translates the text into one of 15 languages.
 - Lexa shows each changed word in color.

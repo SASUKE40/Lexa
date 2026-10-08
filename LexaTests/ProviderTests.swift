@@ -49,6 +49,15 @@ struct ProviderTests {
         #expect(request.model == "m")
     }
 
+    @Test func makeClearUsesSimplifiedTechnicalEnglish() {
+        let system = PromptBuilder.request(action: .improve, text: "x", model: "m").system
+        #expect(system.contains("ASD-STE100 Simplified Technical English"))
+        #expect(system.contains("20 words"))
+        #expect(system.contains("active voice"))
+        #expect(WritingAction.improve.temperature == 0.2)
+        #expect(WritingAction.improve.help.contains("ASD-STE100"))
+    }
+
     @Test func preferencesPersist() throws {
         let suite = "lexa.tests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))

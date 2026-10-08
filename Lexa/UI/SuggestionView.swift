@@ -84,6 +84,7 @@ struct SuggestionView: View {
         }
         .modifier(ChipStyle(selected: state.action == action && state.phase != .ready))
         .keyboardShortcut(shortcut, modifiers: .command)
+        .help(action.help)
     }
 
     private var isTone: Bool {
