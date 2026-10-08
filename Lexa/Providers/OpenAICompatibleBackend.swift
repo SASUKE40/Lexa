@@ -56,7 +56,7 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
         if provider.needsKey, apiKey.isEmpty { return .problem("Add an API key first.") }
         do {
             let elapsed = try await ping(model: model)
-            return .ready("\(model) replied in \(elapsed)")
+            return .ready("Connected · replied in \(elapsed)")
         } catch {
             return .problem(error.localizedDescription)
         }

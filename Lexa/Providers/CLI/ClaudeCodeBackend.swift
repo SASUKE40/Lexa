@@ -57,7 +57,7 @@ nonisolated struct ClaudeCodeBackend: LLMBackend {
             guard loggedIn else { return .problem(Self.signInMessage) }
             // `auth status` can report a login that has since expired, so make a real request.
             let elapsed = try await ping(model: model)
-            return .ready("Claude (\(model.isEmpty ? "default" : model)) replied in \(elapsed) · \(executable.path)")
+            return .ready("Signed in · replied in \(elapsed)")
         } catch {
             return .problem(error.localizedDescription)
         }

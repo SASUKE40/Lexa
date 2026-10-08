@@ -68,9 +68,8 @@ nonisolated struct CodexBackend: LLMBackend {
         do {
             let status = try await CLIRunner.run(executable, ["login", "status"], timeout: .seconds(20))
             guard status.status == 0 else { return .problem(Self.signInMessage) }
-            let summary = status.diagnostics.components(separatedBy: "\n").first ?? "Signed in"
             let elapsed = try await ping(model: model)
-            return .ready("\(summary) · replied in \(elapsed) · \(executable.path)")
+            return .ready("Signed in · replied in \(elapsed)")
         } catch {
             return .problem(error.localizedDescription)
         }
