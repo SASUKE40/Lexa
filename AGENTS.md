@@ -7,6 +7,7 @@ Native SwiftUI menu bar app (macOS 26+, Swift 6, no third-party dependencies).
 - Test: `make test` (Swift Testing, target `LexaTests`, hosted in Lexa.app)
 - Run: `make run`; Debug builds accept `--demo ["text"]` to open the panel immediately
 - Regenerate app icon: `make icon`
+- Signing: `make signing` creates a self-signed "Lexa Local Signing" identity; `make build` re-signs with it when present so the Accessibility (TCC) grant survives rebuilds. Ad-hoc builds lose the grant on every rebuild; fix with `tccutil reset Accessibility com.sasuke40.lexa`.
 
 ## Project layout
 - `Lexa.xcodeproj` is hand-written and uses **synchronized folders**: any file added under `Lexa/` or `LexaTests/` is compiled automatically, so don't edit the pbxproj to add files. `Lexa/Info.plist` is excluded from resources via a membership exception.
