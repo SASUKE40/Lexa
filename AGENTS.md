@@ -28,7 +28,8 @@ Lexa is a SwiftUI menu bar app for macOS 26 (or a newer version). It uses Swift 
 - The Nous sign-in uses the public `hermes-cli` client ID because Nous has no public client registration. Keep the disclosure in Settings and in the README.
 - `GitHubOAuth.clientID` is the client ID of the Lexa GitHub OAuth App (device flow on). If it is empty, Settings does not show "Sign in with GitHub".
 - Send user text to a CLI through stdin. Do not put user text in argv.
-- Write all user-facing text (UI, error messages, README) in ASD-STE100 Simplified Technical English:
+- Keep README.md short (installation, procedure, providers, updates, privacy). Put developer details in docs/DEVELOPMENT.md.
+- Write all user-facing text (UI, error messages, README, docs) in ASD-STE100 Simplified Technical English:
   - Use approved words with their approved meanings. Software terms (API key, model, provider, shortcut, CLI) are technical nouns. Click, type, press, copy, paste, install, highlight, and translate are technical verbs.
   - Write a maximum of 20 words in an instruction and 25 words in a description.
   - Write one instruction in each sentence. Use the active voice.
