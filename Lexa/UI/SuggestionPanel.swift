@@ -40,6 +40,7 @@ final class FloatingPanel: NSPanel {
 final class SuggestionPanelController {
     private let panel = FloatingPanel()
     static let width: CGFloat = 460
+    static let cornerRadius: CGFloat = 22
 
     init(state: AppState) {
         let root = SuggestionView(state: state)
@@ -48,7 +49,18 @@ final class SuggestionPanelController {
             }
         let hosting = NSHostingView(rootView: root)
         hosting.sizingOptions = []
-        panel.contentView = hosting
+        hosting.autoresizingMask = [.width, .height]
+
+        // Clip the window to the glass shape so the window shadow follows the rounded
+        // corners instead of drawing a grey rectangle around them.
+        let container = NSView(frame: NSRect(origin: .zero, size: panel.frame.size))
+        container.wantsLayer = true
+        container.layer?.cornerRadius = Self.cornerRadius
+        container.layer?.cornerCurve = .continuous
+        container.layer?.masksToBounds = true
+        container.addSubview(hosting)
+        hosting.frame = container.bounds
+        panel.contentView = container
         panel.onDismiss = { [weak state] in state?.closePanel() }
     }
 

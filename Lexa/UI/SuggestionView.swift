@@ -13,7 +13,7 @@ struct SuggestionView: View {
         .padding(16)
         .frame(width: SuggestionPanelController.width, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)
-        .glassEffect(.regular, in: .rect(cornerRadius: 22))
+        .glassEffect(.regular, in: .rect(cornerRadius: SuggestionPanelController.cornerRadius, style: .continuous))
     }
 
     // MARK: - Header
