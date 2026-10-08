@@ -23,6 +23,14 @@
 
 Select text in an app. Then press **⌥⌘G**. Lexa shows a corrected version of the text and highlights the changes. Press **↩** to replace the selected text.
 
+## Video
+
+<p align="center">
+  <a href="docs/lexa.mp4"><img src="docs/lexa-video.jpg" width="720" alt="Lexa video: one minute"></a>
+</p>
+
+Click the image to see a one-minute video of Lexa. The model results in the video are examples from a local test server.
+
 ## Installation
 
 You must have macOS 26 (or a newer version).
