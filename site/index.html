@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lexa: a small Grammarly alternative for macOS</title>
   <meta name="description" content="Select text in an app and press Option-Command-G. Lexa corrects the text and shows the changes. Use a free LLM, a local model, or your ChatGPT or Claude subscription.">
-  <meta name="theme-color" content="#0b0d18">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0b0d18" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5f6fb" media="(prefers-color-scheme: light)">
+  <script>
+    // Apply the saved appearance before the page draws, so there is no flash.
+    try {
+      const theme = localStorage.getItem("theme");
+      if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+    } catch {}
+  </script>
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/icon.png">
   <link rel="stylesheet" href="style.css">
@@ -29,6 +38,7 @@
       <a href="#functions">Functions</a>
       <a href="#providers">Providers</a>
       <a href="https://github.com/SASUKE40/Lexa">GitHub</a>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Appearance: automatic" title="Appearance: automatic"></button>
       <a class="button small" href="https://github.com/SASUKE40/Lexa/releases/latest">Download</a>
     </nav>
   </header>
