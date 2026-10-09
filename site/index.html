@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lexa: a small Grammarly alternative for macOS</title>
+  <meta name="description" content="Select text in an app and press Option-Command-G. Lexa corrects the text and shows the changes. Use a free LLM, a local model, or your ChatGPT or Claude subscription.">
+  <meta name="theme-color" content="#0b0d18">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/icon.png">
+  <link rel="stylesheet" href="style.css">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Lexa: a small Grammarly alternative for macOS">
+  <meta property="og:description" content="Select text. Press ⌥⌘G. Lexa corrects the text and shows the changes.">
+  <meta property="og:url" content="https://edward40.com/Lexa/">
+  <meta property="og:image" content="https://edward40.com/Lexa/assets/og.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="nav">
+    <a class="brand" href="#top" aria-label="Lexa home">
+      <img src="assets/icon.png" alt="" width="32" height="32">
+      <span>Lexa</span>
+    </a>
+    <nav>
+      <a href="#functions">Functions</a>
+      <a href="#providers">Providers</a>
+      <a href="https://github.com/SASUKE40/Lexa">GitHub</a>
+      <a class="button small" href="https://github.com/SASUKE40/Lexa/releases/latest">Download</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <img class="hero-icon" src="assets/icon.png" alt="Lexa icon" width="128" height="128">
+      <h1>Better text in all apps on your Mac.</h1>
+      <p class="lead">Select text. Press <kbd>⌥⌘G</kbd>. Lexa corrects the text and shows the changes.<br>
+        Use a free LLM, a local model, or your ChatGPT or Claude subscription.</p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/SASUKE40/Lexa/releases/latest">Download for macOS</a>
+        <div class="command" data-copy="brew install --cask sasuke40/tap/lexa">
+          <code>brew install --cask sasuke40/tap/lexa</code>
+          <button type="button" class="copy" aria-label="Copy the Homebrew command">Copy</button>
+        </div>
+      </div>
+      <p class="meta"><span id="version">Version 1.0.4</span> · macOS 26 or newer · Free and open source (MIT)</p>
+    </section>
+
+    <section class="video glass" aria-label="Video of Lexa">
+      <video controls playsinline preload="metadata" poster="assets/poster.jpg">
+        <source src="assets/lexa.mp4" type="video/mp4">
+      </video>
+      <p class="note">The model results in the video are examples from a local test server.</p>
+    </section>
+
+    <section class="steps">
+      <h2>Three steps</h2>
+      <ol>
+        <li class="glass"><span class="num">1</span><h3>Select text</h3><p>Use Mail, Notes, Slack, a web browser, or a different app.</p></li>
+        <li class="glass"><span class="num">2</span><h3>Press <kbd>⌥⌘G</kbd></h3><p>Lexa shows the result in a small window. The changed words have colors.</p></li>
+        <li class="glass"><span class="num">3</span><h3>Press <kbd>↩</kbd></h3><p>Lexa replaces the selected text. Then Lexa puts your clipboard back.</p></li>
+      </ol>
+    </section>
+
+    <section id="functions">
+      <h2>Functions</h2>
+      <div class="grid four">
+        <article class="glass card">
+          <div class="badge">⌘1</div>
+          <h3>Correct</h3>
+          <p>Lexa corrects the grammar, spelling, and punctuation. It makes only the necessary changes.</p>
+        </article>
+        <article class="glass card">
+          <div class="badge">⌘2</div>
+          <h3>Make Clear</h3>
+          <p>Lexa writes the text again in <a href="https://www.asd-ste100.org">ASD-STE100 Simplified Technical English</a>: short sentences, the active voice, and approved words.</p>
+        </article>
+        <article class="glass card">
+          <div class="badge">Tone</div>
+          <h3>Change the tone</h3>
+          <p>Lexa changes the text to a Formal, Friendly, Short, or Confident tone.</p>
+        </article>
+        <article class="glass card">
+          <div class="badge">15</div>
+          <h3>Translate</h3>
+          <p>Lexa translates the text into one of 15 languages and keeps the format.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="providers">
+      <h2>Your model. Your choice.</h2>
+      <div class="grid three">
+        <article class="glass card">
+          <h3>Free API providers</h3>
+          <ul>
+            <li><strong>OpenRouter</strong> <span>Sign in, or API key</span></li>
+            <li><strong>Nous Portal</strong> <span>Sign in, or API key</span></li>
+            <li><strong>GitHub Models</strong> <span>Sign in, or GitHub CLI</span></li>
+            <li><strong>Groq · Cerebras</strong> <span>API key</span></li>
+            <li><strong>Gemini · Mistral</strong> <span>API key</span></li>
+          </ul>
+        </article>
+        <article class="glass card">
+          <h3>Local models</h3>
+          <ul>
+            <li><strong>Ollama</strong> <span>No key</span></li>
+            <li><strong>LM Studio</strong> <span>No key</span></li>
+            <li><strong>Custom server</strong> <span>OpenAI-compatible</span></li>
+          </ul>
+          <p class="small">Your text stays on your Mac.</p>
+        </article>
+        <article class="glass card">
+          <h3>Subscriptions</h3>
+          <ul>
+            <li><strong>ChatGPT</strong> <span>Codex CLI</span></li>
+            <li><strong>Claude</strong> <span>Claude Code CLI</span></li>
+          </ul>
+          <p class="small">Lexa uses the newest model of your plan. Lexa does not read the credentials of the CLI.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="details grid four">
+      <div><h3>Private</h3><p>Lexa sends your text only to the provider that you select.</p></div>
+      <div><h3>Safe keys</h3><p>Lexa keeps API keys and tokens in the macOS Keychain.</p></div>
+      <div><h3>Updates</h3><p>Lexa finds new versions and installs them with one click.</p></div>
+      <div><h3>Small</h3><p>A native menu bar app with Liquid Glass. It has no Dock icon.</p></div>
+    </section>
+
+    <section class="cta glass">
+      <h2>Get Lexa</h2>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/SASUKE40/Lexa/releases/latest">Download for macOS</a>
+        <div class="command" data-copy="brew install --cask sasuke40/tap/lexa">
+          <code>brew install --cask sasuke40/tap/lexa</code>
+          <button type="button" class="copy" aria-label="Copy the Homebrew command">Copy</button>
+        </div>
+      </div>
+      <p class="small">Apple did not notarize Lexa. When you open Lexa for the first time, go to System Settings → Privacy &amp; Security. Then click “Open Anyway”.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p><a href="https://github.com/SASUKE40/Lexa">GitHub</a> · <a href="https://github.com/SASUKE40/homebrew-tap">Homebrew tap</a> · <a href="https://github.com/SASUKE40/Lexa/blob/main/LICENSE">MIT License</a></p>
+    <p class="small">The Nous Portal sign-in uses the public client ID of Hermes Agent. Nous Research did not give Lexa permission for this sign-in, and it can stop at any time. Grammarly is a trademark of its owner. Lexa is not related to Grammarly.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

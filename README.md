@@ -13,6 +13,8 @@
   <a href="https://github.com/SASUKE40/Lexa/releases/latest"><img src="https://img.shields.io/badge/Download-Lexa%20for%20macOS-0A84FF?style=for-the-badge&logo=apple&logoColor=white" alt="Download Lexa for macOS"></a>
 </p>
 
+<p align="center"><a href="https://edward40.com/Lexa/">Website</a></p>
+
 <p align="center">
   <a href="https://github.com/SASUKE40/Lexa/releases/latest"><img src="https://img.shields.io/github/v/release/SASUKE40/Lexa?label=release" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white" alt="macOS 26+">

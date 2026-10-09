@@ -52,3 +52,9 @@ Lexa starts the signed-in `codex exec` or `claude -p` CLI on your Mac. Lexa send
 
 - **ChatGPT**: Lexa uses the first model in the Codex model list (`~/.codex/models_cache.json`).
 - **Claude**: Lexa uses the `opus` alias, which always points to the newest Claude Opus model.
+
+## Website
+
+The website is in `site/`. It is static HTML, CSS, and JavaScript, and it has no build step. To see it on your Mac, type `python3 -m http.server -d site`. Then open http://localhost:8000.
+
+When you push a change in `site/` to `main`, a GitHub Action deploys the website to https://edward40.com/Lexa/.
