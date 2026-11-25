@@ -10,6 +10,7 @@ nonisolated struct LLMRequest: Sendable, Equatable {
 nonisolated enum TextUpdate: Sendable, Equatable {
     case append(String)
     case replace(String)
+    case usage(TokenUsage)
 }
 
 nonisolated enum BackendStatus: Sendable, Equatable {
@@ -29,7 +30,7 @@ nonisolated protocol LLMBackend: Sendable {
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<TextUpdate, Error>
     /// Verifies credentials / reachability for the Settings "Test" button.
     func test() async -> BackendStatus
-    func listModels() async throws -> [String]
+    func listModels() async throws -> [ModelInfo]
 }
 
 nonisolated extension LLMBackend {
@@ -43,6 +44,7 @@ nonisolated extension LLMBackend {
             switch update {
             case .append(let text): reply += text
             case .replace(let text): reply = text
+            case .usage: break
             }
         }
         if ResponseCleaner.stripThinking(reply).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

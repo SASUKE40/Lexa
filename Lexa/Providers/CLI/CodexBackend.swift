@@ -43,6 +43,9 @@ nonisolated struct CodexBackend: LLMBackend {
             var gotText = false
             do {
                 for try await line in lines {
+                    if let usage = CodexStreamParser.parseUsage(line: line) {
+                        continuation.yield(.usage(usage))
+                    }
                     switch CodexStreamParser.parse(line: line) {
                     case .delta(let text):
                         continuation.yield(.append(text))
@@ -75,8 +78,8 @@ nonisolated struct CodexBackend: LLMBackend {
         }
     }
 
-    func listModels() async throws -> [String] {
-        CodexModels.available()
+    func listModels() async throws -> [ModelInfo] {
+        CodexModels.available().map { ModelInfo(id: $0) }
     }
 
     static func friendly(_ message: String) -> String {

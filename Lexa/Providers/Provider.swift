@@ -38,6 +38,10 @@ nonisolated struct Provider: Identifiable, Hashable, Sendable {
 
     var isCLI: Bool { kind != .openAICompatible }
     var allowsBaseURLEdit: Bool { kind == .openAICompatible && group == .local }
+    /// Whether `/chat/completions` accepts `stream_options: {"include_usage": true}` without rejecting it.
+    var supportsStreamUsageOption: Bool {
+        kind == .openAICompatible && id != Provider.mistral.id && id != Provider.custom.id
+    }
 }
 
 nonisolated extension Provider {

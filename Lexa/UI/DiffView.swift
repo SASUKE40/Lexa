@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct DiffView: View {
@@ -5,7 +6,8 @@ struct DiffView: View {
 
     var body: some View {
         Text(attributed)
-            .lineSpacing(3)
+            .font(.system(size: 13.5))
+            .lineSpacing(4)
     }
 
     private var attributed: AttributedString {
@@ -16,12 +18,14 @@ struct DiffView: View {
             case .same:
                 break
             case .added:
-                part.foregroundColor = .green
-                part.backgroundColor = .green.opacity(0.15)
+                part.foregroundColor = Color(nsColor: .systemGreen)
+                part.backgroundColor = Color(nsColor: .systemGreen).opacity(0.16)
+                part.inlinePresentationIntent = .stronglyEmphasized
             case .removed:
-                part.foregroundColor = .red.opacity(0.85)
-                part.backgroundColor = .red.opacity(0.1)
+                part.foregroundColor = Color(nsColor: .systemRed).opacity(0.8)
+                part.backgroundColor = Color(nsColor: .systemRed).opacity(0.11)
                 part.strikethroughStyle = .single
+                part.strikethroughColor = NSColor.systemRed.withAlphaComponent(0.75)
             }
             text += part
         }
@@ -32,5 +36,5 @@ struct DiffView: View {
 #Preview {
     DiffView(segments: TextDiff.diff("Their going to the libary tomorow.", "They're going to the library tomorrow."))
         .padding()
-        .frame(width: 400)
+        .frame(width: 420)
 }

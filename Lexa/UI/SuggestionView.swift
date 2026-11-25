@@ -7,12 +7,14 @@ struct SuggestionView: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             if state.hasSelection { actions }
-            content
+            contentCard
             if state.hasSelection { footer }
         }
         .padding(16)
         .frame(width: SuggestionPanelController.width, alignment: .leading)
         .fixedSize(horizontal: false, vertical: true)
+        .animation(.snappy(duration: 0.18), value: state.phase)
+        .animation(.snappy(duration: 0.18), value: state.showChanges)
         .background(WindowDragArea())
         .glassEffect(.regular, in: .rect(cornerRadius: SuggestionPanelController.cornerRadius, style: .continuous))
     }
@@ -23,28 +25,29 @@ struct SuggestionView: View {
         HStack(spacing: 8) {
             Group {
                 Image(systemName: "text.badge.checkmark")
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(.tint)
-                Text("Lexa").font(.headline)
-                Spacer()
-                Text(state.providerSummary)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                Text("Lexa")
+                    .font(.headline)
+                Spacer(minLength: 8)
+                HStack(spacing: 6) {
+                    ModelLogo(modelID: state.model, providerID: state.provider.id, size: 15)
+                    Text(state.providerSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                .padding(.leading, 4)
+                .padding(.trailing, 8)
+                .padding(.vertical, 3)
+                .background(.primary.opacity(0.06), in: Capsule())
             }
             // Clicks go through to the drag area, so the full header moves the window.
             .allowsHitTesting(false)
-            Button {
-                state.closePanel()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.caption.weight(.semibold))
-                    .frame(width: 18, height: 18)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .keyboardShortcut(.cancelAction)
-            .help("Close (Esc)")
+            CloseButton { state.closePanel() }
+                .keyboardShortcut(.cancelAction)
+                .help("Close (Esc)")
         }
     }
 
@@ -57,7 +60,15 @@ struct SuggestionView: View {
                 chip(.improve, shortcut: "2")
                 Menu {
                     ForEach(Tone.allCases) { tone in
-                        Button(tone.title) { state.run(.tone(tone)) }
+                        Button {
+                            state.run(.tone(tone))
+                        } label: {
+                            if state.action == .tone(tone), isTone {
+                                Label(tone.title, systemImage: "checkmark")
+                            } else {
+                                Text(tone.title)
+                            }
+                        }
                     }
                 } label: {
                     Label(toneTitle, systemImage: "theatermasks")
@@ -67,10 +78,18 @@ struct SuggestionView: View {
                 .fixedSize()
                 Menu {
                     ForEach(languages, id: \.self) { language in
-                        Button(language) { state.run(.translate(language)) }
+                        Button {
+                            state.run(.translate(language))
+                        } label: {
+                            if state.action == .translate(language), isTranslate {
+                                Label(language, systemImage: "checkmark")
+                            } else {
+                                Text(language)
+                            }
+                        }
                     }
                 } label: {
-                    Label("Translate", systemImage: "globe")
+                    Label(translateTitle, systemImage: "globe")
                 }
                 .menuStyle(.button)
                 .modifier(ChipStyle(selected: isTranslate))
@@ -107,12 +126,58 @@ struct SuggestionView: View {
         return "Tone"
     }
 
+    private var translateTitle: String {
+        if case .translate(let language) = state.action, isTranslate { return language }
+        return "Translate"
+    }
+
     private var languages: [String] {
         let preferred = state.preferences.translateLanguage
         return [preferred] + WritingAction.languages.filter { $0 != preferred }
     }
 
     // MARK: - Content
+
+    @ViewBuilder
+    private var contentCard: some View {
+        if state.phase != .idle {
+            VStack(alignment: .leading, spacing: 10) {
+                content
+                if state.phase == .done, let usage = state.lastUsage {
+                    Divider()
+                        .opacity(0.5)
+                    usageStrip(usage)
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.primary.opacity(0.045))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(.primary.opacity(0.08), lineWidth: 0.5)
+            )
+        }
+    }
+
+    private func usageStrip(_ usage: TokenUsage) -> some View {
+        HStack(spacing: 8) {
+            Label(
+                "\(UsageFormatting.tokens(usage.inputTokens)) in · \(UsageFormatting.tokens(usage.outputTokens)) out",
+                systemImage: "arrow.left.arrow.right"
+            )
+            Spacer(minLength: 8)
+            if let cost = usage.costUSD {
+                Text(UsageFormatting.cost(cost))
+            }
+        }
+        .font(.caption2)
+        .monospacedDigit()
+        .foregroundStyle(.secondary)
+        .help(usage.detailTooltip)
+    }
 
     @ViewBuilder
     private var content: some View {
@@ -131,37 +196,72 @@ struct SuggestionView: View {
             message(
                 "Select text in an app. Then press \(state.preferences.hotKey.display).",
                 systemImage: "text.cursor", color: .secondary
-            ) { EmptyView() }
+            ) {
+                if let clip = state.clipboardCandidate {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Or use the text on the clipboard:")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(clip.trimmingCharacters(in: .whitespacesAndNewlines))
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                            .truncationMode(.tail)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        Button("Use Clipboard") { state.useClipboard() }
+                            .buttonStyle(.glassProminent)
+                            .keyboardShortcut(.defaultAction)
+                            .help("Use Clipboard (↩)")
+                    }
+                }
+            }
         case .ready:
             AutoHeightScroll {
-                Text(state.original).foregroundStyle(.secondary)
+                Text(state.original)
+                    .font(.system(size: 13.5))
+                    .lineSpacing(4)
+                    .foregroundStyle(.secondary)
             }
         case .working:
             if state.liveText.isEmpty {
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     ProgressView().controlSize(.small)
                     Text("Lexa sent the text to \(state.provider.isCLI ? state.provider.name : "the model"). Wait for the result.")
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
             } else {
                 AutoHeightScroll {
-                    Text(state.liveText).foregroundStyle(.primary.opacity(0.8))
+                    Text(state.liveText)
+                        .font(.system(size: 13.5))
+                        .lineSpacing(4)
+                        .foregroundStyle(.primary.opacity(0.85))
                 }
             }
         case .done:
             if state.isUnchanged {
                 Label("The text is correct. No changes are necessary.", systemImage: "checkmark.seal.fill")
+                    .font(.callout.weight(.medium))
                     .foregroundStyle(.green)
-                    .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                    .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
             } else if state.action.showsDiff, state.showChanges {
                 AutoHeightScroll { DiffView(segments: state.segments) }
             } else {
-                AutoHeightScroll { Text(state.result).textSelection(.enabled) }
+                AutoHeightScroll {
+                    Text(state.result)
+                        .font(.system(size: 13.5))
+                        .lineSpacing(4)
+                        .textSelection(.enabled)
+                }
             }
         case .failed(let error):
             message(error, systemImage: "exclamationmark.triangle.fill", color: .orange) {
                 Button("Settings…") { state.showSettings() }
+                    .buttonStyle(.glass)
             }
         }
     }
@@ -170,10 +270,14 @@ struct SuggestionView: View {
         _ text: String, systemImage: String, color: Color, @ViewBuilder action: () -> some View
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label {
-                Text(text).fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
-            } icon: {
-                Image(systemName: systemImage).foregroundStyle(color)
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: systemImage)
+                    .foregroundStyle(color)
+                    .padding(.top, 1)
+                Text(text)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
             }
             action()
         }
@@ -188,27 +292,62 @@ struct SuggestionView: View {
                 Button {
                     state.showChanges.toggle()
                 } label: {
-                    Image(systemName: state.showChanges ? "eye.slash" : "eye")
+                    Label(state.showChanges ? "Changes" : "Result",
+                          systemImage: state.showChanges ? "text.line.first.and.arrowtriangle.forward" : "doc.plaintext")
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.glass)
+                .controlSize(.small)
                 .help(state.showChanges ? "Show only the result" : "Show the changes")
             }
             Spacer()
             if state.phase == .working {
                 ProgressView().controlSize(.small)
             }
-            Button(state.copied ? "Copied" : "Copy") { state.copyResult() }
-                .keyboardShortcut("c", modifiers: .command)
-                .disabled(state.phase != .done)
+            Button {
+                state.copyResult()
+            } label: {
+                if state.copied {
+                    Label("Copied", systemImage: "checkmark")
+                        .foregroundStyle(.green)
+                } else {
+                    Text("Copy")
+                }
+            }
+            .keyboardShortcut("c", modifiers: .command)
+            .disabled(state.phase != .done)
+            .help("Copy (⌘C)")
+
             Button("Try Again") { state.retry() }
                 .keyboardShortcut("r", modifiers: .command)
                 .disabled(state.phase == .ready)
+                .help("Try Again (⌘R)")
+
             Button("Replace") { state.replace() }
                 .buttonStyle(.glassProminent)
                 .keyboardShortcut(.defaultAction)
                 .disabled(state.phase != .done || state.isUnchanged)
+                .help("Replace (↩)")
         }
         .buttonStyle(.glass)
+    }
+}
+
+private struct CloseButton: View {
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "xmark")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(isHovered ? .primary : .secondary)
+                .frame(width: 22, height: 22)
+                .background(
+                    Circle().fill(Color.primary.opacity(isHovered ? 0.1 : 0))
+                )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
     }
 }
 

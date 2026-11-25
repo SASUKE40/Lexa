@@ -36,6 +36,9 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
             let contentType = http?.value(forHTTPHeaderField: "Content-Type") ?? ""
             if contentType.contains("text/event-stream") {
                 lines: for try await line in bytes.lines {
+                    if let usage = OpenAIStreamParser.parseUsage(line: line) {
+                        continuation.yield(.usage(usage))
+                    }
                     switch OpenAIStreamParser.parse(line: line) {
                     case .delta(let text): continuation.yield(.append(text))
                     case .snapshot(let text), .final(let text): continuation.yield(.replace(text))
@@ -47,6 +50,9 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
             } else {
                 var body = Data()
                 for try await byte in bytes { body.append(byte) }
+                if let usage = OpenAIStreamParser.parseUsage(body: body) {
+                    continuation.yield(.usage(usage))
+                }
                 switch OpenAIStreamParser.parse(body: body) {
                 case .final(let text), .snapshot(let text), .delta(let text): continuation.yield(.replace(text))
                 case .error(let message): throw LLMError(message)
@@ -66,24 +72,17 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
         }
     }
 
-    func listModels() async throws -> [String] {
+    func listModels() async throws -> [ModelInfo] {
         guard let url = Self.endpoint(baseURL, "models") else { throw LLMError("Set a base URL.") }
         var request = URLRequest(url: url, timeoutInterval: 20)
         try await applyHeaders(&request)
+        async let fallbackDates: [String: ModelReleaseDate] = provider.id == Provider.gemini.id
+            ? ModelCatalog.shared.googleReleaseDates()
+            : [:]
         let (data, response) = try await perform { try await URLSession.shared.data(for: request) }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else { throw httpError(status: status, body: data, model: "") }
-
-        let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
-        let entries = (object?["data"] as? [[String: Any]]) ?? (object?["models"] as? [[String: Any]]) ?? []
-        var ids = entries.compactMap { ($0["id"] as? String) ?? ($0["name"] as? String) }
-        ids = ids.map { $0.hasPrefix("models/") ? String($0.dropFirst(7)) : $0 }
-        if provider.id == Provider.openRouter.id {
-            ids = ["openrouter/free"] + ids.filter { $0.hasSuffix(":free") }.sorted()
-        } else {
-            ids.sort()
-        }
-        return ids
+        return ModelList.parse(data, providerID: provider.id, knownDates: await fallbackDates)
     }
 
     // MARK: - Helpers
@@ -97,7 +96,7 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
         urlRequest.httpMethod = "POST"
         try await applyHeaders(&urlRequest)
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "model": request.model,
             "stream": stream,
             "temperature": request.temperature,
@@ -106,6 +105,9 @@ nonisolated struct OpenAICompatibleBackend: LLMBackend {
                 ["role": "user", "content": request.user],
             ],
         ]
+        if stream, provider.supportsStreamUsageOption {
+            body["stream_options"] = ["include_usage": true]
+        }
         urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
         return urlRequest
     }

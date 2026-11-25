@@ -66,7 +66,7 @@ To change the shortcut or the default action, click the menu bar icon. Then clic
 | ChatGPT, Claude | Your subscription, through the `codex` or `claude` CLI |
 | Custom | A server with an OpenAI-compatible `/chat/completions` endpoint |
 
-Lexa keeps API keys and tokens in the macOS Keychain. Lexa does not read the credentials of the `codex` and `claude` CLIs. Use your subscription only for your work, and obey the terms of your plan.
+Lexa keeps API keys and tokens in a private file (`0600`) on this Mac. Lexa does not read the credentials of the `codex` and `claude` CLIs. Use your subscription only for your work, and obey the terms of your plan.
 
 The Nous Portal sign-in uses the public client ID of Hermes Agent. Nous Research did not give Lexa permission for this sign-in, and it can stop at any time.
 

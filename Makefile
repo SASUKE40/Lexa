@@ -40,7 +40,7 @@ test:
 	$(XCODEBUILD) -configuration Debug test
 
 run: build
-	-pkill -x Lexa
+	-pkill -x Lexa; while pgrep -x Lexa >/dev/null 2>&1; do sleep 0.1; done
 	open "$(APP)"
 
 icon:

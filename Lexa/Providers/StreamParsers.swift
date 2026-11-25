@@ -54,6 +54,19 @@ nonisolated enum OpenAIStreamParser {
         return content(object, delta: false)
     }
 
+    static func parseUsage(line: String) -> TokenUsage? {
+        let line = line.trimmingCharacters(in: .whitespaces)
+        guard line.hasPrefix("data:") else { return nil }
+        let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+        guard payload != "[DONE]", let object = JSONLine.object(payload) else { return nil }
+        return UsageParser.parse(object)
+    }
+
+    static func parseUsage(body: Data) -> TokenUsage? {
+        guard let object = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any] else { return nil }
+        return UsageParser.parse(object)
+    }
+
     private static func content(_ object: [String: Any], delta: Bool) -> StreamEvent {
         guard let choice = (object["choices"] as? [[String: Any]])?.first else { return .ignore }
         if let delta = choice["delta"] as? [String: Any], let text = delta["content"] as? String {
@@ -94,6 +107,11 @@ nonisolated enum ClaudeStreamParser {
             return .ignore
         }
     }
+
+    static func parseUsage(line: String) -> TokenUsage? {
+        guard let object = JSONLine.object(line), object["type"] as? String == "result" else { return nil }
+        return UsageParser.parse(object)
+    }
 }
 
 /// `codex exec --json` JSONL events.
@@ -118,5 +136,10 @@ nonisolated enum CodexStreamParser {
         default:
             return .ignore
         }
+    }
+
+    static func parseUsage(line: String) -> TokenUsage? {
+        guard let object = JSONLine.object(line), object["type"] as? String == "turn.completed" else { return nil }
+        return UsageParser.parse(object)
     }
 }

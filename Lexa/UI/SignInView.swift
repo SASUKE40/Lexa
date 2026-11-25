@@ -19,7 +19,7 @@ struct ProviderSignInView: View {
 
     @State private var phase: Phase = .idle
     @State private var task: Task<Void, Never>?
-    @State private var nousSignedIn = NousOAuth.isSignedIn
+    @State private var nousSignedIn = false
 
     var body: some View {
         Group {
@@ -40,10 +40,13 @@ struct ProviderSignInView: View {
                 }
             }
         }
+        .onAppear {
+            nousSignedIn = provider.signIn.contains(.nousPortal) && NousOAuth.isSignedIn
+        }
         .onChange(of: provider.id) {
             cancel()
             phase = .idle
-            nousSignedIn = NousOAuth.isSignedIn
+            nousSignedIn = provider.signIn.contains(.nousPortal) && NousOAuth.isSignedIn
         }
         .onDisappear(perform: cancel)
     }
@@ -87,18 +90,11 @@ struct ProviderSignInView: View {
     private func deviceRows(_ authorization: DeviceAuthorization, method: SignInMethod) -> some View {
         Group {
             LabeledContent("Code") {
-                HStack(spacing: 8) {
-                    Text(authorization.userCode)
-                        .font(.title3.monospaced().weight(.semibold))
-                        .textSelection(.enabled)
-                    Button {
-                        copy(authorization.userCode)
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Copy the code")
-                }
+                CopyableCode(
+                    text: authorization.userCode,
+                    font: .title3.monospaced().weight(.semibold),
+                    helpText: "Copy the code"
+                )
             }
             LabeledContent(method == .nousPortal ? "Nous Portal" : "GitHub") {
                 Button("Open the Sign-In Page") { NSWorkspace.shared.open(authorization.verificationURLComplete ?? authorization.verificationURL) }

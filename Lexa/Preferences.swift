@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// User preferences persisted in UserDefaults. API keys live in the Keychain, not here.
+/// User preferences persisted in UserDefaults. API keys live in `Keychain` (a private 0600 file), not here.
 @Observable
 final class Preferences {
     @ObservationIgnored private let defaults: UserDefaults

@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 /// Update status and actions for Settings → General.
@@ -9,8 +8,13 @@ struct UpdateStatusRow: View {
         switch updater.status {
         case .idle, .upToDate:
             HStack {
-                Text(updater.status == .upToDate ? "You have the newest version." : "Lexa did not look for updates yet.")
-                    .foregroundStyle(.secondary)
+                if updater.status == .upToDate {
+                    Label("You have the newest version.", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                } else {
+                    Text("Lexa did not look for updates yet.")
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 findButton
             }
@@ -29,19 +33,7 @@ struct UpdateStatusRow: View {
             }
             if updater.isHomebrewInstall {
                 LabeledContent("Homebrew") {
-                    HStack(spacing: 6) {
-                        Text(UpdateInstaller.brewCommand)
-                            .font(.body.monospaced())
-                            .textSelection(.enabled)
-                        Button {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(UpdateInstaller.brewCommand, forType: .string)
-                        } label: {
-                            Image(systemName: "doc.on.doc")
-                        }
-                        .buttonStyle(.borderless)
-                        .help("Copy the command")
-                    }
+                    CopyableCode(text: UpdateInstaller.brewCommand, helpText: "Copy the command")
                 }
                 Text("You installed Lexa with Homebrew. To update Lexa, type this command in Terminal.")
                     .font(.callout)

@@ -16,6 +16,7 @@ final class SettingsWindowController {
             let tabs = SettingsTabViewController()
             tabs.tabStyle = .toolbar
             tabs.addTab("Provider", symbol: "sparkles", ProviderSettingsView(state: state, preferences: state.preferences))
+            tabs.addTab("Usage", symbol: "chart.bar", UsageSettingsView(usage: state.usage))
             tabs.addTab("General", symbol: "gearshape", GeneralSettingsView(state: state, preferences: state.preferences))
             let window = NSWindow(contentViewController: tabs)
             window.styleMask = [.titled, .closable]
@@ -34,6 +35,7 @@ final class SettingsWindowController {
 
 enum SettingsTab: Int {
     case provider
+    case usage
     case general
 }
 
@@ -67,7 +69,7 @@ private extension View {
     func settingsPage() -> some View {
         formStyle(.grouped)
             .scrollDisabled(true)
-            .frame(width: 480)
+            .frame(width: 520)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -78,11 +80,13 @@ private struct ProviderSettingsView: View {
     let state: AppState
     @Bindable var preferences: Preferences
     @State private var apiKey = ""
-    @State private var fetchedModels: [String] = []
+    @State private var fetchedModels: [ModelInfo] = []
     @State private var status: BackendStatus?
     @State private var isTesting = false
     @State private var isFetching = false
     @State private var fetchError: String?
+    @State private var fetchTask: Task<Void, Never>?
+    @State private var testTask: Task<Void, Never>?
     /// nil while searching, "" when not found.
     @State private var detectedCLI: String?
 
@@ -91,13 +95,21 @@ private struct ProviderSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Picker("Provider", selection: $preferences.providerID) {
-                    ForEach(ProviderGroup.allCases, id: \.self) { group in
-                        Section(group.rawValue) {
-                            ForEach(Provider.all.filter { $0.group == group }) { provider in
-                                Text(provider.name).tag(provider.id)
+                LabeledContent {
+                    Picker("Provider", selection: $preferences.providerID) {
+                        ForEach(ProviderGroup.allCases, id: \.self) { group in
+                            Section(group.rawValue) {
+                                ForEach(Provider.all.filter { $0.group == group }) { provider in
+                                    Text(provider.name).tag(provider.id)
+                                }
                             }
                         }
+                    }
+                    .labelsHidden()
+                } label: {
+                    HStack(spacing: 8) {
+                        ModelLogo(provider: provider, size: 18)
+                        Text("Provider")
                     }
                 }
             } footer: {
@@ -129,7 +141,11 @@ private struct ProviderSettingsView: View {
             detectedCLI = nil
             detectedCLI = await CLILocator.locate(provider.executable, override: preferences.cliPath(for: provider))?.path ?? ""
         }
-        .onDisappear { state.setAPIKey(apiKey, for: provider) }
+        .onDisappear {
+            fetchTask?.cancel()
+            testTask?.cancel()
+            state.setAPIKey(apiKey, for: provider)
+        }
     }
 
     // MARK: Sections
@@ -167,19 +183,7 @@ private struct ProviderSettingsView: View {
     private var subscriptionSection: some View {
         Section {
             LabeledContent("Sign in") {
-                HStack(spacing: 6) {
-                    Text(signInCommand)
-                        .font(.body.monospaced())
-                        .textSelection(.enabled)
-                    Button {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(signInCommand, forType: .string)
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Copy the command")
-                }
+                CopyableCode(text: signInCommand, helpText: "Copy the command")
             }
             LabeledContent("Command-line tool") {
                 HStack(spacing: 8) {
@@ -216,13 +220,14 @@ private struct ProviderSettingsView: View {
 
     private var modelSection: some View {
         Section {
-            LabeledContent("Model") {
-                HStack(spacing: 4) {
+            LabeledContent {
+                HStack(spacing: 6) {
                     TextField("Model", text: binding(\.models, default: provider.defaultModel),
                               prompt: Text(provider.isCLI ? "Default" : "model-id"))
                         .labelsHidden()
                         .multilineTextAlignment(.trailing)
                     ModelPicker(
+                        providerID: provider.id,
                         models: modelChoices,
                         selection: preferences.model(for: provider),
                         canDownload: !provider.isCLI,
@@ -232,6 +237,11 @@ private struct ProviderSettingsView: View {
                         onDownload: fetchModels,
                         onSelect: { preferences.models[provider.id] = $0 }
                     )
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    ModelLogo(modelID: preferences.model(for: provider), providerID: provider.id, size: 18)
+                    Text("Model")
                 }
             }
         } header: {
@@ -285,7 +295,7 @@ private struct ProviderSettingsView: View {
             return "The Nous Portal sign-in uses the public client ID of Hermes Agent. Nous Research did not give Lexa permission for this sign-in, and it can stop at any time."
         }
         if provider.signIn.contains(.gitHubCLI) {
-            return "The sign-in gives a GitHub token. Lexa keeps the token in the macOS Keychain."
+            return "The sign-in gives a GitHub token. Lexa keeps the token in a private file on this Mac."
         }
         return nil
     }
@@ -294,9 +304,8 @@ private struct ProviderSettingsView: View {
         provider.kind == .claudeCLI ? "claude auth login" : "codex login"
     }
 
-    private var modelChoices: [String] {
-        var seen = Set<String>()
-        return (provider.suggestedModels + fetchedModels).filter { seen.insert($0).inserted }
+    private var modelChoices: [ModelInfo] {
+        fetchedModels.isEmpty ? provider.suggestedModels.map { ModelInfo(id: $0) } : fetchedModels
     }
 
     private func binding(_ keyPath: ReferenceWritableKeyPath<Preferences, [String: String]>, default value: String) -> Binding<String> {
@@ -313,9 +322,15 @@ private struct ProviderSettingsView: View {
     }
 
     private func load() {
+        fetchTask?.cancel()
+        fetchTask = nil
+        testTask?.cancel()
+        testTask = nil
         apiKey = state.apiKey(for: provider)
         fetchedModels = []
         fetchError = nil
+        isFetching = false
+        isTesting = false
         status = nil
     }
 
@@ -331,29 +346,40 @@ private struct ProviderSettingsView: View {
     }
 
     private func test() {
+        testTask?.cancel()
         state.setAPIKey(apiKey, for: provider)
         let backend = state.makeBackend(for: provider)
+        let providerID = provider.id
         isTesting = true
         status = nil
-        Task {
-            status = await backend.test()
+        testTask = Task {
+            let result = await backend.test()
+            guard !Task.isCancelled, provider.id == providerID else { return }
+            status = result
             isTesting = false
         }
     }
 
     private func fetchModels() {
+        fetchTask?.cancel()
         state.setAPIKey(apiKey, for: provider)
         let backend = state.makeBackend(for: provider)
+        let providerID = provider.id
         isFetching = true
         fetchError = nil
-        Task {
+        fetchTask = Task {
             do {
-                fetchedModels = try await backend.listModels()
+                let models = try await backend.listModels()
+                guard !Task.isCancelled, provider.id == providerID else { return }
+                fetchedModels = models
                 if fetchedModels.isEmpty { fetchError = "The provider sent no models." }
+            } catch is CancellationError {
+                return
             } catch {
+                guard !Task.isCancelled, provider.id == providerID else { return }
                 fetchError = error.localizedDescription
             }
-            isFetching = false
+            if provider.id == providerID { isFetching = false }
         }
     }
 }
@@ -439,6 +465,7 @@ private struct GeneralSettingsView: View {
                             .foregroundStyle(.green)
                     } else {
                         Button("Give Access…") { state.requestAccessibility() }
+                            .buttonStyle(.borderedProminent)
                     }
                 }
             } header: {
@@ -469,8 +496,9 @@ private struct HotKeyRecorder: View {
             } label: {
                 Text(isRecording ? "Press a shortcut" : state.preferences.hotKey.display)
                     .font(.body.monospaced())
-                    .frame(minWidth: 90)
+                    .frame(minWidth: 100)
             }
+            .modifier(RecordingButtonStyle(isRecording: isRecording))
             .help(isRecording ? "Press a shortcut. Press Esc to cancel." : "Click to change the shortcut")
             if state.preferences.hotKey != .default, !isRecording {
                 Button {
@@ -506,6 +534,18 @@ private struct HotKeyRecorder: View {
         if isRecording {
             isRecording = false
             state.registerHotKey()
+        }
+    }
+}
+
+private struct RecordingButtonStyle: ViewModifier {
+    let isRecording: Bool
+
+    func body(content: Content) -> some View {
+        if isRecording {
+            content.buttonStyle(.borderedProminent)
+        } else {
+            content.buttonStyle(.bordered)
         }
     }
 }

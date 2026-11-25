@@ -16,12 +16,15 @@ final class AppState {
 
     let preferences = Preferences()
     let updater = Updater()
+    let usage = UsageTracker()
     var phase: Phase = .idle
     var action: WritingAction = .fix
     var original = ""
     var output = ""
     var result = ""
     var segments: [DiffSegment] = []
+    var lastUsage: TokenUsage?
+    var clipboardCandidate: String?
     var showChanges = true
     var copied = false
     var accessibilityGranted = Accessibility.isTrusted
@@ -98,12 +101,23 @@ final class AppState {
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else {
             reset(phase: .noSelection)
+            let clip = NSPasteboard.general.string(forType: .string)
+            clipboardCandidate = clip.flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
             panel.show()
             return
         }
         reset(phase: .ready)
         original = text
         panel.show()
+        if preferences.autoRun { run(preferences.defaultAction) }
+    }
+
+    func useClipboard() {
+        guard let text = clipboardCandidate,
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return }
+        reset(phase: .ready)
+        original = text
         if preferences.autoRun { run(preferences.defaultAction) }
     }
 
@@ -114,18 +128,23 @@ final class AppState {
         output = ""
         result = ""
         segments = []
+        lastUsage = nil
         copied = false
         phase = .working
 
-        let backend = makeBackend(for: provider)
-        let request = PromptBuilder.request(action: action, text: original, model: model)
+        let currentProvider = provider
+        let currentModel = model
+        let backend = makeBackend(for: currentProvider)
+        let request = PromptBuilder.request(action: action, text: original, model: currentModel)
         let original = original
         task = Task {
             do {
+                var reportedUsage: TokenUsage?
                 for try await update in backend.stream(request) {
                     switch update {
                     case .append(let text): output += text
                     case .replace(let text): output = text
+                    case .usage(let u): reportedUsage = u
                     }
                 }
                 try Task.checkCancellation()
@@ -136,6 +155,19 @@ final class AppState {
                 result = cleaned
                 segments = action.showsDiff ? TextDiff.diff(original, cleaned) : []
                 phase = .done
+
+                if let reportedUsage {
+                    lastUsage = reportedUsage
+                    let finalUsage: TokenUsage
+                    if reportedUsage.costUSD == nil {
+                        let pricing = await ModelCatalog.shared.pricing(for: currentModel, provider: currentProvider)
+                        finalUsage = reportedUsage.withEstimatedCost(pricing)
+                    } else {
+                        finalUsage = reportedUsage
+                    }
+                    if !Task.isCancelled { lastUsage = finalUsage }
+                    usage.record(finalUsage, providerID: currentProvider.id)
+                }
             } catch is CancellationError {
             } catch {
                 guard !Task.isCancelled else { return }
@@ -175,6 +207,8 @@ final class AppState {
         output = ""
         result = ""
         segments = []
+        lastUsage = nil
+        clipboardCandidate = nil
         copied = false
     }
 

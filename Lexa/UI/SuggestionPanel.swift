@@ -7,7 +7,7 @@ final class FloatingPanel: NSPanel {
     var onDismiss: (() -> Void)?
 
     init() {
-        super.init(contentRect: NSRect(x: 0, y: 0, width: 460, height: 160),
+        super.init(contentRect: NSRect(x: 0, y: 0, width: SuggestionPanelController.width, height: 160),
                    styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
         isFloatingPanel = true
         level = .floating
@@ -54,7 +54,7 @@ struct WindowDragArea: NSViewRepresentable {
 
 final class SuggestionPanelController {
     private let panel = FloatingPanel()
-    static let width: CGFloat = 460
+    static let width: CGFloat = 480
     static let cornerRadius: CGFloat = 22
 
     init(state: AppState) {

@@ -35,6 +35,9 @@ nonisolated struct ClaudeCodeBackend: LLMBackend {
                                         stdin: request.user, workingDirectory: CLILocator.workspace)
             do {
                 for try await line in lines {
+                    if let usage = ClaudeStreamParser.parseUsage(line: line) {
+                        continuation.yield(.usage(usage))
+                    }
                     switch ClaudeStreamParser.parse(line: line) {
                     case .delta(let text): continuation.yield(.append(text))
                     case .snapshot(let text), .final(let text): continuation.yield(.replace(text))
@@ -64,8 +67,8 @@ nonisolated struct ClaudeCodeBackend: LLMBackend {
         }
     }
 
-    func listModels() async throws -> [String] {
-        Provider.claude.suggestedModels
+    func listModels() async throws -> [ModelInfo] {
+        Provider.claude.suggestedModels.map { ModelInfo(id: $0) }
     }
 
     static func friendly(_ message: String) -> String {
